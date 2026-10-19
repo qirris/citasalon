@@ -18,7 +18,7 @@ Bot de reservas de peluquería por WhatsApp + panel de administración completo 
 - URL de producción: `https://<tu-worker>.workers.dev`
 - Rutas activas: `/health`, `/webhook`, `/admin`, `/recepcion`, `/qr`
 - `npm run check` (tsc --noEmit): limpio.
-- `npm run e2e` (test/e2e.mjs): **59/59 pruebas correctas** (local, con `npm run dev`).
+- `npm run e2e` (test/e2e.mjs): **60/60 pruebas correctas** (local, con `npm run dev`).
 - Verificado en vivo tras el despliegue: `/health` → `{"ok":true}`; `/qr` muestra SVG + título; `/admin` pide contraseña con CSP; login con la contraseña de admin → 303.
 - Rate-limit activo en producción (429 con `Retry-After` tras 120/min por sesión o 60/min por IP).
 
@@ -90,6 +90,7 @@ En el repositorio `C:\Users\<usuario>\Documents\NEGOCIOS\bot\citasalon`:
 - **Modificados**: `src/index.ts` (rutas de panel vía `handlePanel`, normalización de teléfono, import de los módulos nuevos), `wrangler.jsonc` (database_id real de la D1 creada en producción), `src/db.ts` (+`rateLimited` y purga de `rate_limits` en cleanup), `src/panels.ts` (+`rateGate`/`tooManyPage`, gancho al inicio de `handlePanel`), `schema.sql` (+tabla `rate_limits`), `package.json` (scripts `backup` y reset e2e con `rate_limits`), `test/e2e.mjs` (+2 pruebas de rate-limit).
 - **No tocados**: `bot.ts`, `time.ts`, `types.ts`, `whatsapp.ts`, `reminders.ts`, `availability.ts`, `config.ts`, `auth.ts`, `phone.ts`.
 - **Creados (documentación)**: `memoria.md`, `AGENTS.md`, `instrucciones/` (ver sección 11).
+- **Corregido (revisión visual)**: `src/config.ts` — `salonName`/`address`/`phone` se guardaban con `JSON.stringify` (añadían comillas) pero se leían en crudo, así que tras guardar Ajustes el nombre aparecía como `"Salón Nuevo"` (con comillas) en paneles, cartel QR y mensajes del bot; ahora se leen con un parseo seguro (`s()`, JSON.parse con respaldo al valor crudo, compatible con datos ya guardados). `src/panels.ts` — CSS: scroll vertical en la barra lateral, contraste del subtítulo de marca (`#94a3b8`), `aria-label` en el selector de fecha; `test/e2e.mjs` — 2 guardas de regresión nuevas.
 
 
 ## 7. Decisiones tomadas
@@ -107,7 +108,7 @@ En el repositorio `C:\Users\<usuario>\Documents\NEGOCIOS\bot\citasalon`:
 ## 8. Pruebas verificadas
 
 - `npm run check` → sin errores TypeScript (verificado 2026-10-19 tras cada cambio).
-- `npm run e2e` → **59/59** (2026-10-19): bots, login/roles/forged-cookie/CSRF, agenda, CRUD completo, conflictos 409, validaciones 422, ajustes + efecto en el bot, historial, CSP, bloqueo 429, logout, rate-limit por sesión e IP.
+- `npm run e2e` → **60/60** (2026-10-19): bots, login/roles/forged-cookie/CSRF, agenda, CRUD completo, conflictos 409, validaciones 422, ajustes + efecto en el bot, historial, CSP, bloqueo 429, logout, rate-limit por sesión e IP, y 2 guardas de regresión (los ajustes se guardan sin comillas sobrantes; el cartel QR muestra el nombre limpio).
 - Producción (2026-10-19): `/health`, `/qr`, `/admin` y login real con la contraseña de admin generada (303) — verificado con Invoke-WebRequest. Rate-limit verificado en vivo (2 pruebas de e2e remotas pasan: 429 por sesión y por IP).
 - NOTA: el e2e completo contra producción falla en login/CRUD porque la producción NO tiene secretos de panel ni `APP_SECRET` (decisión del usuario de no activar WhatsApp); es esperado, no una regresión. El e2e completo es contra local.
 - Procedimiento local reproducible: `npx wrangler d1 execute citasalon --local --file=schema.sql`, `npm run dev` (puerto 8787), `npm run e2e`.
@@ -115,7 +116,7 @@ En el repositorio `C:\Users\<usuario>\Documents\NEGOCIOS\bot\citasalon`:
 
 ## 9. Errores y problemas pendientes
 
-Solucionados (documentados en `instrucciones/DECISIONES.md`): compilación por módulos faltantes; mezcla `||`/`??`; tipos de formularios en `panels.ts`; database_id ficticio en `wrangler.jsonc`.
+Solucionados (documentados en `instrucciones/DECISIONES.md`): compilación por módulos faltantes; mezcla `||`/`??`; tipos de formularios en `panels.ts`; database_id ficticio en `wrangler.jsonc`; y comillas sobrantes en nombre/dirección/teléfono tras guardar Ajustes (bug detectado en la revisión visual, corregido en `config.ts`).
 
 Pendientes/riesgos:
 
@@ -133,8 +134,7 @@ Cuando el usuario lo pida:
 2. Cambiar las vars de salón reales (`SALON_NAME`, `SALON_ADDRESS`, `SALON_PHONE`, `WHATSAPP_NUMBER`, `WHATSAPP_PHONE_ID`) y redesplegar.
 3. Poner los secretos de panel en producción (`ADMIN_PASSWORD`, `STAFF_PASSWORD`, `SESSION_SECRET`, `VERIFY_TOKEN`) para que los paneles funcionen en el worker remoto.
 4. Opcional: poner los datos reales vía `/admin/ajustes` (nombre, dirección, teléfono, servicios, peluqueros, horarios).
-5. Revisión visual de los paneles en el navegador (el e2e valida contenido, no el diseño).
-6. Copia de seguridad periódica: `npm run backup` (manual por ahora; se podría programar con un cron de GitHub Actions o similar).
+5. Copia de seguridad periódica: `npm run backup` (manual por ahora; se podría programar con un cron de GitHub Actions o similar).
 
 ## 11. Historial de actualizaciones
 
@@ -151,3 +151,4 @@ Cuando el usuario lo pida:
 - **2026-10-19** — Renombrado el repo en GitHub a `bot-whatsapp` (https://github.com/tu-usuario/citasalon); remote local actualizado; commits de memoria y de GitHub push (`c0ffbf6`).
 - **2026-10-19** — Backup de D1: script `npm run backup` (exporta a `backups/backup.sql`, carpeta fuera de git por privacidad de teléfonos); commit `326c8c1`.
 - **2026-10-19** — Rate-limit por sesión e IP: tabla `rate_limits` (ventana deslizante 60 s, 120/min sesión, 60/min IP), `db.rateLimited`, `rateGate`/`tooManyPage` en `panels.ts` (aplica a login, logout, `/qr` y todas las rutas de panel), purga en cron, +2 pruebas e2e (**59/59**), esquema aplicado a D1 remoto y desplegado (versión `f37b500e`). Rate-limit verificado en vivo en producción (las 2 pruebas remotas pasan); el resto del e2e remoto falla por falta de secretos de panel en producción (esperado, documentado).
+- **2026-10-19** — Revisión visual de los paneles (capturas con Edge headless + revisión del HTML/CSS generado). Mejoras de CSS: scroll en la barra lateral, contraste del subtítulo de marca y `aria-label` en el selector de fecha. Bug funcional detectado y corregido: los campos de texto de Ajustes se mostraban con comillas sobrantes tras guardarlas (`config.ts`). Añadidas 2 guardas de regresión al e2e (**60/60**). `npm run check` limpio; desplegado (versión `ac97fb1e`).

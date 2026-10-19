@@ -21,7 +21,7 @@
 - Límites: **120 peticiones/min por sesión** y **60/min por IP** → 429 con `Retry-After: 60` y página propia.
 - Se aplica a TODAS las rutas de panel (login, logout, `/qr`, agenda, etc.) antes de cualquier lógica; cookies falsificadas caen en el cubo de IP (no se puede rotar cubo cambiando la cookie).
 - Las peticiones rechazadas NO insertan fila (no alargan su propia ventana); el cron purga filas de más de 10 min.
-- Verificado en e2e (59 pruebas): sesión agotada → 429; IP agotada en `/qr` → 429.
+- Verificado en e2e (60 pruebas): sesión agotada → 429; IP agotada en `/qr` → 429.
 
 ## Webhook de WhatsApp
 

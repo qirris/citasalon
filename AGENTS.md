@@ -33,4 +33,4 @@ Bot de reservas de peluquería por WhatsApp + paneles `/admin`, `/recepcion` y c
 ## Estado rápido
 
 - Producción: `https://<tu-worker>.workers.dev` (worker + D1 desplegados 2026-10-19).
-- Última verificación: `npm run check` limpio; e2e **59/59**; salud/QR/admin comprobados en vivo; rate-limit activo en producción. Detalle en `memoria.md` secciones 8 y 11.
+- Última verificación: `npm run check` limpio; e2e **60/60**; salud/QR/admin comprobados en vivo; rate-limit activo en producción. Detalle en `memoria.md` secciones 8 y 11.

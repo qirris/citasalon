@@ -11,7 +11,7 @@ npm run e2e     # limpia las tablas de la D1 local y ejecuta test/e2e.mjs (requi
 
 1. `npx wrangler d1 execute citasalon --local --file=schema.sql` (primera vez o si se cambió el esquema).
 2. `npm run dev` → servidor en `http://localhost:8787` (lee `.dev.vars`).
-3. `npm run e2e` → objetivo: **59/59 pruebas correctas, 0 fallidas**.
+3. `npm run e2e` → objetivo: **60/60 pruebas correctas, 0 fallidas**.
 
 Notas:
 - El e2e borra las tablas locales al empezar (no usa la BD de producción).
@@ -28,6 +28,7 @@ Notas:
 - Ajustes: validación ("Servicio, línea 1", "tramo válido"), guardado y efecto inmediato en el bot.
 - Seguridad: historial completo con los 6 tipos de acción y los 3 actores, sin `<script>`, cabecera CSP con `default-src 'none'`.
 - Rate-limit: 429 tras superar 120 peticiones/minuto con una sesión; 429 en `/qr` tras superar el límite por IP (sin sesión).
+- Regresión (revisión visual): tras guardar Ajustes, el nombre no lleva comillas sobrantes ni en el panel ni en el cartel QR (guarda contra el bug de `config.ts`).
 
 ## Verificación en producción
 
@@ -46,4 +47,4 @@ Comprobar también `/qr` (200 + `<svg`) y `/admin` (200 + "Contraseña" + CSP). 
 
 ## Resultados verificados
 
-- 2026-10-19: check limpio y e2e 59/59 en local; verificación en vivo de producción correcta; rate-limit verificado en producción (las 2 pruebas remotas pasan). El e2e completo NO se puede ejecutar contra producción: el worker remoto no tiene secretos de panel (decisión del usuario de no activar WhatsApp aún). Detalle en `memoria.md` sección 8.
+- 2026-10-19: check limpio y e2e 60/60 en local (incl. 2 guardas de regresión de la revisión visual); verificación en vivo de producción correcta; rate-limit verificado en producción (las 2 pruebas remotas pasan). El e2e completo NO se puede ejecutar contra producción: el worker remoto no tiene secretos de panel (decisión del usuario de no activar WhatsApp aún). Detalle en `memoria.md` sección 8.

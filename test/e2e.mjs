@@ -178,7 +178,9 @@ const idFromLoc = (t) => Number((t.match(/\/cita\/(\d+)"/) ?? [])[1]);
   r = await admin.req("/admin/ajustes", { method: "POST", form: newSettings });
   ok(r.status === 303 && r.loc.includes("ok=ajustes"), "Admin guarda los ajustes");
   await wa("34699000111", { text: "hola" }); await wa("34699000111", { id: "menu:book" });
-  ok((await admin.req("/admin/ajustes")).text.includes("Salón Nuevo"), "Los ajustes quedan guardados");
+  const savedAjustes = (await admin.req("/admin/ajustes")).text;
+  ok(savedAjustes.includes("Salón Nuevo") && !savedAjustes.includes("&quot;Salón Nuevo&quot;"), "Los ajustes quedan guardados sin comillas sobrantes");
+  ok((await admin.req("/qr")).text.includes("<strong>Salón Nuevo</strong>"), "El cartel QR muestra el nombre limpio");
 
   section("Historial y seguridad");
   const hist = (await admin.req("/admin/historial")).text;

@@ -73,7 +73,7 @@ Las contraseñas de los paneles se configuran como secretos (`ADMIN_PASSWORD` y 
 ```powershell
 npm run check   # TypeScript en modo estricto (sin emitir)
 npm run dev     # terminal 1: servidor local en el puerto 8787
-npm run e2e     # terminal 2: prueba de extremo a extremo (59 pruebas)
+npm run e2e     # terminal 2: prueba de extremo a extremo (60 pruebas)
 npm run backup  # exporta una copia de la D1 de producción a backups/backup.sql
 ```
 

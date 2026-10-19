@@ -12,13 +12,13 @@ Estado: proyecto funcional y desplegado; lo que queda depende de decisiones del 
 
 ## Opcionales / mejora continua
 
-3. **Revisión visual** de los paneles en navegador (el e2e valida contenido y estructura, no el diseño CSS).
+- Revisión visual de los paneles: **hecha** (capturas con Edge headless + revisión del HTML/CSS generado; ver "Hecho recientemente"). Si quieres verlo tú: `npm run dev` y abre `http://127.0.0.1:8787`.
 
 ## Hecho recientemente (no repetir)
 
 - [x] Módulos `auth.ts`, `config.ts`, `availability.ts`, `phone.ts`, `panels.ts`.
 - [x] Rutas `/admin`, `/recepcion`, `/qr` + auditoría + seguridad (CSRF, bloqueo, CSP).
-- [x] `npm run check` limpio; e2e 59/59.
+- [x] `npm run check` limpio; e2e 60/60.
 - [x] D1 de producción creada (id `<DATABASE_ID>`) + esquema.
 - [x] Worker publicado; secretos de panel/subida subidos (valores en manos del usuario).
 - [x] Sistema de memoria (`memoria.md`, `AGENTS.md`, `instrucciones/`).
@@ -27,3 +27,4 @@ Estado: proyecto funcional y desplegado; lo que queda depende de decisiones del 
 - [x] Subido a GitHub: https://github.com/tu-usuario/citasalon (privado, renombrado desde citasalon).
 - [x] Backup de D1: `npm run backup` (exporta a `backups/backup.sql`, carpeta fuera de git por privacidad).
 - [x] Rate-limit por sesión e IP en todos los paneles (tabla `rate_limits`, 120/min sesión, 60/min IP, 429 con Retry-After); esquema aplicado a D1 remoto y desplegado.
+- [x] Revisión visual de los paneles: mejoras de CSS (scroll lateral, contraste del subtítulo, `aria-label` en el selector de fecha) y bug corregido (nombre/dirección/teléfono de Ajustes con comillas sobrantes); +2 guardas de regresión e2e (60/60); desplegado (versión `ac97fb1e`).

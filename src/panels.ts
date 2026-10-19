@@ -42,9 +42,9 @@ const css = `
 *{box-sizing:border-box;margin:0;padding:0}
 body{font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#eef1f6;color:#1e2430;min-height:100vh}
 .shell{display:flex;min-height:100vh}
-.side{width:230px;flex:0 0 230px;background:#0f172a;color:#cbd5e1;display:flex;flex-direction:column;padding:20px 14px;gap:4px;position:sticky;top:0;height:100vh}
+.side{width:230px;flex:0 0 230px;background:#0f172a;color:#cbd5e1;display:flex;flex-direction:column;padding:20px 14px;gap:4px;position:sticky;top:0;height:100vh;overflow-y:auto}
 .brand{font-size:19px;font-weight:700;color:#fff;letter-spacing:.3px;padding:6px 10px 16px}
-.brand small{display:block;font-size:11px;font-weight:400;color:#64748b;letter-spacing:.5px;text-transform:uppercase}
+.brand small{display:block;font-size:11px;font-weight:400;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase}
 .side a{color:#cbd5e1;text-decoration:none;padding:9px 12px;border-radius:8px;font-size:14px}
 .side a:hover{background:#1e293b;color:#fff}
 .side a.on{background:#2563eb;color:#fff}
@@ -258,7 +258,7 @@ async function agendaPage(
   ${role === "admin" ? (withCancelled
     ? `<a class="btn sec" href="${q({ cancelled: null })}">Ocultar canceladas</a>`
     : `<a class="btn sec" href="${q({ cancelled: "1" })}">Ver canceladas</a>`) : ""}
-  <form method="get" action="${base}/" class="inline"><input type="date" name="date" value="${dayStr(day)}" style="width:auto"> <button class="btn sec" type="submit">Ir</button></form>
+  <form method="get" action="${base}/" class="inline"><input type="date" name="date" value="${dayStr(day)}" style="width:auto" aria-label="Elegir fecha"> <button class="btn sec" type="submit">Ir</button></form>
 </div>
 <p class="sub">${esc(s.salonName)} · ${esc(s.address)} · ${esc(s.phone)}</p>
 ${flash(url)}

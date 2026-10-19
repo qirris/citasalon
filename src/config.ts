@@ -21,10 +21,15 @@ export async function loadSettings(env: Env): Promise<Settings> {
     const v = Number(map.get(k));
     return map.has(k) && Number.isFinite(v) ? v : d;
   };
+  const s = (k: string, d: string) => {
+    const v = map.get(k);
+    if (v === undefined) return d;
+    try { const p = JSON.parse(v); return typeof p === "string" ? p : v; } catch { return v; }
+  };
   return {
-    salonName: map.get("salonName") ?? env.SALON_NAME,
-    address: map.get("address") ?? env.SALON_ADDRESS,
-    phone: map.get("phone") ?? env.SALON_PHONE,
+    salonName: s("salonName", env.SALON_NAME),
+    address: s("address", env.SALON_ADDRESS),
+    phone: s("phone", env.SALON_PHONE),
     services: j("services", DEFAULT_SERVICES),
     stylists: j("stylists", ["Ana", "Luis"]),
     hours: j("hours", DEFAULT_HOURS),
