@@ -18,7 +18,7 @@ Bot de reservas de peluquería por WhatsApp + panel de administración completo 
 - URL de producción: `https://<tu-worker>.workers.dev`
 - Rutas activas: `/health`, `/webhook`, `/admin`, `/recepcion`, `/qr`
 - `npm run check` (tsc --noEmit): limpio.
-- `npm run e2e` (test/e2e.mjs): **60/60 pruebas correctas** (local, con `npm run dev`).
+- `npm run e2e` (test/e2e.mjs): **64/64 pruebas correctas** (local, con `npm run dev`).
 - Verificado en vivo tras el despliegue: `/health` → `{"ok":true}`; `/qr` muestra SVG + título; `/admin` pide contraseña con CSP; login con la contraseña de admin → 303.
 - Rate-limit activo en producción (429 con `Retry-After` tras 120/min por sesión o 60/min por IP).
 
@@ -75,6 +75,7 @@ Ver también: `instrucciones/NORMAS_DE_CODIGO.md`, `instrucciones/SEGURIDAD.md`,
 - Bot WhatsApp: reserva con botones/listas o texto libre ("corte mujer", "por la tarde", "a las 5"), cancelación propia desde "Mis citas", límite de citas por cliente, aviso de horario/dirección.
 - Disponibilidad: huecos según horario del salón, minutos por tramo, días cerrados, antelación mínima, máximo de días por delante, evitando choques por peluquero.
 - Panel `/admin` (solo rol admin): agenda diaria con estadísticas y toggle de canceladas, crear/editar/cancelar/restaurar/borrar citas (borrar y restaurar solo admin), buscador, ajustes completos, historial de auditoría.
+- Informes (`/admin/informes`, solo admin): resumen por rango de fechas de citas, canceladas, ingresos estimados (con el precio actual de cada servicio) y horas reservadas, desglosado por peluquero y por servicio; descarga del periodo en CSV (`/admin/informes.csv`).
 - Panel `/recepcion` (rol staff o admin): agenda, crear/editar/cancelar; NO puede borrar/restaurar/ajustes/historial (esas rutas devuelven 404 o la página de login de admin).
 - `/qr` público: cartel con código QR a wa.me + datos del salón.
 - Seguridad: sesiones firmadas HMAC 12 h, cookies HttpOnly/SameSite=Strict, bloqueo 15 min tras 5 fallos de login (429), comparación de contraseñas con HMAC constante, CSRF por comprobación de Origin, CSP restrictiva, SQL parametrizado, sin `<script>` en el panel.
@@ -91,6 +92,7 @@ En el repositorio `C:\Users\<usuario>\Documents\NEGOCIOS\bot\citasalon`:
 - **No tocados**: `bot.ts`, `time.ts`, `types.ts`, `whatsapp.ts`, `reminders.ts`, `availability.ts`, `config.ts`, `auth.ts`, `phone.ts`.
 - **Creados (documentación)**: `memoria.md`, `AGENTS.md`, `instrucciones/` (ver sección 11).
 - **Añadido (automatización)**: `.github/workflows/backup.yml` — exporta la D1 remota cada día (03:00 UTC) o a mano y sube el resultado como artefacto de GitHub (30 días, nunca al repo por los datos personales); requiere los secretos `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID`.
+- **Ampliado (informes)**: `src/db.ts` (+`appointmentsInRange`), `src/panels.ts` (+enlace «Informes» en la navegación de admin, `reportRange`, `informesBody`, export CSV con `csvResponse` y helpers `euro`/`parsePrice`/`priceOf`/`durationMin`), `test/e2e.mjs` (+4 pruebas de informes y CSV).
 - **Corregido (revisión visual)**: `src/config.ts` — `salonName`/`address`/`phone` se guardaban con `JSON.stringify` (añadían comillas) pero se leían en crudo, así que tras guardar Ajustes el nombre aparecía como `"Salón Nuevo"` (con comillas) en paneles, cartel QR y mensajes del bot; ahora se leen con un parseo seguro (`s()`, JSON.parse con respaldo al valor crudo, compatible con datos ya guardados). `src/panels.ts` — CSS: scroll vertical en la barra lateral, contraste del subtítulo de marca (`#94a3b8`), `aria-label` en el selector de fecha; `test/e2e.mjs` — 2 guardas de regresión nuevas.
 
 
@@ -109,7 +111,7 @@ En el repositorio `C:\Users\<usuario>\Documents\NEGOCIOS\bot\citasalon`:
 ## 8. Pruebas verificadas
 
 - `npm run check` → sin errores TypeScript (verificado 2026-10-19 tras cada cambio).
-- `npm run e2e` → **60/60** (2026-10-19): bots, login/roles/forged-cookie/CSRF, agenda, CRUD completo, conflictos 409, validaciones 422, ajustes + efecto en el bot, historial, CSP, bloqueo 429, logout, rate-limit por sesión e IP, y 2 guardas de regresión (los ajustes se guardan sin comillas sobrantes; el cartel QR muestra el nombre limpio).
+- `npm run e2e` → **64/64** (2026-10-19): bots, login/roles/forged-cookie/CSRF, agenda, CRUD completo, conflictos 409, validaciones 422, ajustes + efecto en el bot, historial, CSP, bloqueo 429, logout, rate-limit por sesión e IP, informes (ingresos del periodo, desglose por servicio, acceso solo admin) y export CSV, y 2 guardas de regresión (los ajustes se guardan sin comillas sobrantes; el cartel QR muestra el nombre limpio).
 - Producción (2026-10-19): `/health`, `/qr`, `/admin` y login real con la contraseña de admin generada (303) — verificado con Invoke-WebRequest. Rate-limit verificado en vivo (2 pruebas de e2e remotas pasan: 429 por sesión y por IP).
 - NOTA: el e2e completo contra producción falla en login/CRUD porque la producción NO tiene secretos de panel ni `APP_SECRET` (decisión del usuario de no activar WhatsApp); es esperado, no una regresión. El e2e completo es contra local.
 - Procedimiento local reproducible: `npx wrangler d1 execute citasalon --local --file=schema.sql`, `npm run dev` (puerto 8787), `npm run e2e`.
@@ -154,3 +156,4 @@ Cuando el usuario lo pida:
 - **2026-10-19** — Rate-limit por sesión e IP: tabla `rate_limits` (ventana deslizante 60 s, 120/min sesión, 60/min IP), `db.rateLimited`, `rateGate`/`tooManyPage` en `panels.ts` (aplica a login, logout, `/qr` y todas las rutas de panel), purga en cron, +2 pruebas e2e (**59/59**), esquema aplicado a D1 remoto y desplegado (versión `f37b500e`). Rate-limit verificado en vivo en producción (las 2 pruebas remotas pasan); el resto del e2e remoto falla por falta de secretos de panel en producción (esperado, documentado).
 - **2026-10-19** — Revisión visual de los paneles (capturas con Edge headless + revisión del HTML/CSS generado). Mejoras de CSS: scroll en la barra lateral, contraste del subtítulo de marca y `aria-label` en el selector de fecha. Bug funcional detectado y corregido: los campos de texto de Ajustes se mostraban con comillas sobrantes tras guardarlas (`config.ts`). Añadidas 2 guardas de regresión al e2e (**60/60**). `npm run check` limpio; desplegado (versión `ac97fb1e`); commit `1be0854`.
 - **2026-10-19** — Backup automático: `.github/workflows/backup.yml` (diario 03:00 UTC + manual) exporta la D1 remota como artefacto de GitHub (30 días, nunca al repo). Pendiente de que el usuario añada los secretos `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID` en GitHub.
+- **2026-10-19** — Nueva función: Informes (`/admin/informes`, solo admin) con totales, ingresos estimados, horas reservadas y desglose por peluquero/servicio sobre un rango de fechas, más exportación CSV (`/admin/informes.csv`). `npm run check` limpio; e2e **64/64**; desplegado (versión `d65501c1`).

@@ -28,6 +28,32 @@ const OK_TEXT: Record<string, string> = {
 const esc = (v: unknown): string => String(v ?? "").replace(/[&<>"']/g, (c) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
+const euro = (n: number): string => (Number.isInteger(n) ? String(n) : n.toFixed(2).replace(".", ",")) + " €";
+const parsePrice = (p: string): number => {
+  const m = String(p ?? "").replace(/\s/g, "").replace(",", ".").match(/-?\d+(?:\.\d+)?/);
+  return m ? Number(m[0]) : 0;
+};
+const priceOf = (s: Settings, a: Appt): number => {
+  const svc = s.services.find((x) => x.id === a.service_id) ?? s.services.find((x) => x.name === a.service_name);
+  return svc ? parsePrice(svc.price) : 0;
+};
+const durationMin = (a: Appt): number =>
+  Math.max(0, (parseDT(a.ends_at).getTime() - parseDT(a.starts_at).getTime()) / 60000);
+const csvCell = (v: unknown): string => {
+  const t = String(v ?? "");
+  return /[";\n\r]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
+};
+function csvResponse(rows: string[][], filename: string): Response {
+  const body = "\uFEFF" + rows.map((r) => r.map(csvCell).join(";")).join("\r\n") + "\r\n";
+  return new Response(body, {
+    headers: {
+      "content-type": "text/csv; charset=utf-8",
+      "content-disposition": `attachment; filename="${filename}"`,
+      "content-security-policy": CSP,
+    },
+  });
+}
+
 function html(body: string, status = 200, headers: Record<string, string> = {}): Response {
   return new Response(body, {
     status,
@@ -130,7 +156,11 @@ const nav = (base: string, role: PanelRole, active: string): string => {
     ["nueva", base + "/nueva", "Nueva cita"],
     ["citas", base + "/citas", "Buscar"],
   ];
-  if (role === "admin") items.push(["ajustes", "/admin/ajustes", "Ajustes"], ["historial", "/admin/historial", "Historial"]);
+  if (role === "admin") items.push(
+    ["informes", "/admin/informes", "Informes"],
+    ["ajustes", "/admin/ajustes", "Ajustes"],
+    ["historial", "/admin/historial", "Historial"],
+  );
   items.push(["qr", "/qr", "Cartel QR"]);
   return items.map(([k, href, label]) =>
     `<a href="${href}"${k === active ? ' class="on"' : ""}>${label}</a>`).join("\n");
@@ -522,6 +552,57 @@ ${rows.length ? `<table>
   return layout(env, s, "/admin", role, "historial", "Historial", body);
 }
 
+// ------------------------------------------------------------------ informes
+function reportRange(url: URL, now: Date): { from: string; to: string } {
+  const today = startOfDay(now);
+  let from = url.searchParams.get("from") ?? "";
+  let to = url.searchParams.get("to") ?? "";
+  if (!isValidDay(from)) from = dayStr(new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1)));
+  if (!isValidDay(to)) to = dayStr(today);
+  if (from > to) [from, to] = [to, from];
+  return { from, to };
+}
+
+function informesBody(s: Settings, from: string, to: string, list: Appt[]): string {
+  const confirmed = list.filter((a) => a.status === "confirmed");
+  const cancelled = list.length - confirmed.length;
+  const income = confirmed.reduce((t, a) => t + priceOf(s, a), 0);
+  const hours = (confirmed.reduce((t, a) => t + durationMin(a), 0) / 60).toFixed(1).replace(".", ",");
+
+  const tally = (key: (a: Appt) => string) => {
+    const m = new Map<string, { n: number; income: number }>();
+    for (const a of confirmed) {
+      const c = m.get(key(a)) ?? { n: 0, income: 0 };
+      c.n++; c.income += priceOf(s, a); m.set(key(a), c);
+    }
+    return [...m].sort((x, y) => y[1].income - x[1].income || y[1].n - x[1].n);
+  };
+  const table = (label: string, rows: [string, { n: number; income: number }][]) => rows.length
+    ? `<table><thead><tr><th>${label}</th><th>Citas</th><th>Ingresos</th></tr></thead><tbody>${rows.map(([k, v]) =>
+        `<tr><td>${esc(k)}</td><td class="mono">${v.n}</td><td class="mono">${esc(euro(v.income))}</td></tr>`).join("")}</tbody></table>`
+    : `<div class="empty"><p class="note">Sin citas en este periodo.</p></div>`;
+
+  return `
+<div class="top"><h1>Informes</h1></div>
+<p class="sub">Resumen de citas e ingresos entre dos fechas. Los ingresos se calculan con el precio actual de cada servicio.</p>
+<form method="get" action="/admin/informes" class="top" style="margin-bottom:6px">
+  <label for="i-from">Desde</label><input type="date" id="i-from" name="from" value="${esc(from)}" style="width:auto">
+  <label for="i-to">Hasta</label><input type="date" id="i-to" name="to" value="${esc(to)}" style="width:auto">
+  <button class="btn" type="submit">Ver informe</button>
+  <a class="btn sec" href="/admin/informes.csv?from=${esc(from)}&to=${esc(to)}">Descargar CSV</a>
+</form>
+<div class="stats">
+  <div class="stat"><b>${confirmed.length}</b><span>Citas</span></div>
+  <div class="stat"><b>${cancelled}</b><span>Canceladas</span></div>
+  <div class="stat"><b>${esc(euro(income))}</b><span>Ingresos</span></div>
+  <div class="stat"><b>${esc(hours)} h</b><span>Reservado</span></div>
+</div>
+<h2>Por peluquero</h2>
+${table("Peluquero", tally((a) => a.stylist))}
+<h2>Por servicio</h2>
+${table("Servicio", tally((a) => a.service_name))}`;
+}
+
 // ------------------------------------------------------------------ enrutador
 function ipOf(req: Request): string {
   return req.headers.get("CF-Connecting-IP") ?? "local";
@@ -780,6 +861,26 @@ ${!q ? `<div class="empty"><p>Escribe un nombre o un teléfono para buscar.</p><
     }
 
     return new Response("No encontrado", { status: 404 });
+  }
+
+  if (sub === "informes.csv" && role === "admin" && req.method === "GET") {
+    const s = await loadSettings(env);
+    const { from, to } = reportRange(url, now);
+    const list = await db.appointmentsInRange(env.DB, from, to);
+    const header = ["Fecha", "Hora", "Peluquero", "Servicio", "Cliente", "Teléfono", "Estado", "Precio (€)", "Origen", "Notas"];
+    const rows = list.map((a) => [
+      a.starts_at.slice(0, 10), a.starts_at.slice(11, 16), a.stylist, a.service_name, a.name,
+      displayPhone(a.phone), a.status === "confirmed" ? "Confirmada" : "Cancelada", String(priceOf(s, a)),
+      a.source === "whatsapp" ? "WhatsApp" : a.source === "admin" ? "Panel" : "Recepción", a.notes,
+    ]);
+    return csvResponse([header, ...rows], `informe_${from}_${to}.csv`);
+  }
+
+  if (sub === "informes" && role === "admin" && req.method === "GET") {
+    const s = await loadSettings(env);
+    const { from, to } = reportRange(url, now);
+    const list = await db.appointmentsInRange(env.DB, from, to);
+    return html(layout(env, s, "/admin", role, "informes", "Informes", informesBody(s, from, to, list)));
   }
 
   if (sub === "ajustes" && role === "admin") {

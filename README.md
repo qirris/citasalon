@@ -42,7 +42,7 @@ Utilidades de fechas y horas: convertir zonas horarias, formatear horas, sumar m
 Tipos TypeScript compartidos por todos los módulos: `Appt`, `Service`, `Settings`, `Env`, `Role`, etc.
 
 ### `src/panels.ts`
-Todas las rutas de los paneles web (`/admin`, `/recepcion`, `/qr`): login, agenda, CRUD de citas, buscador, ajustes y historial de auditoría. HTML server-side sin JavaScript en el navegador.
+Todas las rutas de los paneles web (`/admin`, `/recepcion`, `/qr`): login, agenda, CRUD de citas, buscador, ajustes, historial de auditoría e informes (ingresos por periodo + export CSV). HTML server-side sin JavaScript en el navegador.
 
 ### `src/auth.ts`
 Autenticación de los paneles: cookies de sesión firmadas con HMAC-SHA256, comparación en tiempo constante de contraseñas y tokens.
@@ -58,7 +58,7 @@ Además del bot, el Worker sirve tres rutas web:
 
 | Ruta | Rol | Qué hace |
 |---|---|---|
-| `/admin` | admin | Agenda diaria con estadísticas, crear/editar/cancelar/restaurar/borrar citas, buscador, ajustes completos del salón, historial de auditoría |
+| `/admin` | admin | Agenda diaria con estadísticas, crear/editar/cancelar/restaurar/borrar citas, buscador, ajustes completos del salón, historial de auditoría e informes con ingresos y export CSV |
 | `/recepcion` | staff o admin | Agenda, crear/editar/cancelar citas. No puede borrar, restaurar, ver ajustes ni historial |
 | `/qr` | público | Cartel con código QR hacia wa.me con los datos del salón |
 
@@ -73,11 +73,11 @@ Las contraseñas de los paneles se configuran como secretos (`ADMIN_PASSWORD` y 
 ```powershell
 npm run check   # TypeScript en modo estricto (sin emitir)
 npm run dev     # terminal 1: servidor local en el puerto 8787
-npm run e2e     # terminal 2: prueba de extremo a extremo (60 pruebas)
+npm run e2e     # terminal 2: prueba de extremo a extremo (64 pruebas)
 npm run backup  # exporta una copia de la D1 de producción a backups/backup.sql
 ```
 
-`test/e2e.mjs` es la especificación real del panel: cubre el bot, login y roles, agenda, CRUD completo, conflictos de horario, validaciones, ajustes, historial, CSP, bloqueo de login y rate-limit por sesión e IP.
+`test/e2e.mjs` es la especificación real del panel: cubre el bot, login y roles, agenda, CRUD completo, conflictos de horario, validaciones, ajustes, historial, informes (ingresos y CSV), CSP, bloqueo de login y rate-limit por sesión e IP.
 
 ## Copia de seguridad automática
 

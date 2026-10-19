@@ -165,6 +165,14 @@ export async function searchAppointments(
   return (await db.prepare(sql).bind(...args).all<Appt>()).results;
 }
 
+/** Citas (confirmadas y canceladas) cuyo inicio cae entre dos días inclusive */
+export async function appointmentsInRange(db: D1Database, from: string, to: string): Promise<Appt[]> {
+  const r = await db.prepare(
+    "SELECT * FROM appointments WHERE starts_at >= ? AND starts_at <= ? ORDER BY starts_at, stylist, id",
+  ).bind(`${from}T00:00`, `${to}T23:59`).all<Appt>();
+  return r.results;
+}
+
 export async function dueReminders(db: D1Database, now: Date): Promise<Appt[]> {
   // citas de las próximas 24 h, sin recordatorio, y reservadas con más de 24 h de antelación
   const r = await db.prepare(

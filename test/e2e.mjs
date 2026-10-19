@@ -164,6 +164,15 @@ const idFromLoc = (t) => Number((t.match(/\/cita\/(\d+)"/) ?? [])[1]);
   list = await admin.req("/admin/citas?q=" + encodeURIComponent("' OR 1=1 --"));
   ok(list.status === 200 && list.text.includes("No hay citas"), "El buscador resiste inyección SQL");
 
+  section("Informes (admin)");
+  ok((await staff.req("/admin/informes")).text.includes("Contraseña"), "Recepción NO puede ver los informes");
+  const inf = await admin.req(`/admin/informes?from=${DAY}&to=${DAY2}`);
+  ok(inf.status === 200 && inf.text.includes("Ingresos") && inf.text.includes("80 €"), "El informe suma los ingresos del periodo (80 €)", inf.text.slice(0, 400));
+  ok(inf.text.includes("Tinte") && inf.text.includes("Corte hombre"), "El informe desglosa por servicio");
+  const csv = await admin.req(`/admin/informes.csv?from=${DAY}&to=${DAY2}`);
+  ok((csv.headers.get("content-type") ?? "").includes("text/csv") && csv.text.includes("Lucía Gómez") && csv.text.includes("Fecha"),
+    "El CSV exporta las citas del periodo");
+
   section("Ajustes editables (admin) y efecto en el bot");
   let st = await admin.req("/admin/ajustes");
   ok(st.text.includes("Corte mujer") && st.text.includes("Ana, Luis"), "Ajustes muestra la configuración actual");

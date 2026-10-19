@@ -19,7 +19,7 @@ Estado: proyecto funcional y desplegado; lo que queda depende de decisiones del 
 
 - [x] Módulos `auth.ts`, `config.ts`, `availability.ts`, `phone.ts`, `panels.ts`.
 - [x] Rutas `/admin`, `/recepcion`, `/qr` + auditoría + seguridad (CSRF, bloqueo, CSP).
-- [x] `npm run check` limpio; e2e 60/60.
+- [x] `npm run check` limpio; e2e 64/64.
 - [x] D1 de producción creada (id `<DATABASE_ID>`) + esquema.
 - [x] Worker publicado; secretos de panel/subida subidos (valores en manos del usuario).
 - [x] Sistema de memoria (`memoria.md`, `AGENTS.md`, `instrucciones/`).
@@ -30,3 +30,4 @@ Estado: proyecto funcional y desplegado; lo que queda depende de decisiones del 
 - [x] Backup automático: workflow `.github/workflows/backup.yml` (diario 03:00 UTC + manual) que exporta la D1 remota y sube el resultado como artefacto (30 días, nunca al repo); falta solo que el usuario añada los secretos de GitHub.
 - [x] Rate-limit por sesión e IP en todos los paneles (tabla `rate_limits`, 120/min sesión, 60/min IP, 429 con Retry-After); esquema aplicado a D1 remoto y desplegado.
 - [x] Revisión visual de los paneles: mejoras de CSS (scroll lateral, contraste del subtítulo, `aria-label` en el selector de fecha) y bug corregido (nombre/dirección/teléfono de Ajustes con comillas sobrantes); +2 guardas de regresión e2e (60/60); desplegado (versión `ac97fb1e`).
+- [x] Informes por periodo (`/admin/informes`, solo admin): citas, canceladas, ingresos estimados y horas reservadas, desglose por peluquero/servicio; export CSV (`/admin/informes.csv`); +4 pruebas e2e (64/64); desplegado (versión `d65501c1`).

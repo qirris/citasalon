@@ -48,7 +48,7 @@ Un `Date` cuyos campos UTC representan la hora local del salón; se persiste com
 
 ## Paneles
 
-- `/admin` — solo rol admin. Agenda (+canceladas, estadísticas), CRUD completo (borrar/restaurar solo aquí), `/admin/citas` (buscador), `/admin/ajustes`, `/admin/historial`.
+- `/admin` — solo rol admin. Agenda (+canceladas, estadísticas), CRUD completo (borrar/restaurar solo aquí), `/admin/citas` (buscador), `/admin/informes` (+`/admin/informes.csv`, ingresos y desglose por periodo), `/admin/ajustes`, `/admin/historial`.
 - `/recepcion` — rol staff o admin. Agenda, crear/editar/cancelar. `borrar`/`restaurar` bajo `/recepcion` devuelven 404 a propósito.
 - `/qr` — público.
 - Login propio por base (`/admin/login`, `/recepcion/login`) con contraseñas distintas (`ADMIN_PASSWORD`, `STAFF_PASSWORD`).
