@@ -41,18 +41,69 @@ Utilidades de fechas y horas: convertir zonas horarias, formatear horas, sumar m
 ### `src/types.ts`
 Tipos TypeScript compartidos por todos los módulos: `Appt`, `Service`, `Settings`, `Env`, `Role`, etc.
 
+### `src/panels.ts`
+Todas las rutas de los paneles web (`/admin`, `/recepcion`, `/qr`): login, agenda, CRUD de citas, buscador, ajustes y historial de auditoría. HTML server-side sin JavaScript en el navegador.
+
+### `src/auth.ts`
+Autenticación de los paneles: cookies de sesión firmadas con HMAC-SHA256, comparación en tiempo constante de contraseñas y tokens.
+
+### `src/phone.ts`
+Normalización de teléfonos españoles a formato `+34…` (usada en el panel y en el webhook de WhatsApp).
+
+---
+
+## Paneles web
+
+Además del bot, el Worker sirve tres rutas web:
+
+| Ruta | Rol | Qué hace |
+|---|---|---|
+| `/admin` | admin | Agenda diaria con estadísticas, crear/editar/cancelar/restaurar/borrar citas, buscador, ajustes completos del salón, historial de auditoría |
+| `/recepcion` | staff o admin | Agenda, crear/editar/cancelar citas. No puede borrar, restaurar, ver ajustes ni historial |
+| `/qr` | público | Cartel con código QR hacia wa.me con los datos del salón |
+
+Los paneles son formularios HTML + redirecciones 303, sin JavaScript en el navegador (más seguros y sin dependencias). Seguridad: cookies HttpOnly/SameSite=Strict, bloqueo de login tras 5 fallos, CSRF por comprobación de Origin, CSP restrictiva y SQL parametrizado.
+
+Las contraseñas de los paneles se configuran como secretos (`ADMIN_PASSWORD` y `STAFF_PASSWORD`) con `npx wrangler secret put`.
+
+---
+
+## Pruebas
+
+```powershell
+npm run check   # TypeScript en modo estricto (sin emitir)
+npm run dev     # terminal 1: servidor local en el puerto 8787
+npm run e2e     # terminal 2: prueba de extremo a extremo (57 pruebas)
+```
+
+`test/e2e.mjs` es la especificación real del panel: cubre el bot, login y roles, agenda, CRUD completo, conflictos de horario, validaciones, ajustes, historial, CSP y bloqueo de login.
+
+---
+
+## Sistema de memoria del proyecto
+
+Este proyecto usa el documentación interna del proyecto:
+
+- **`memoria.md`** — memoria viva: estado, decisiones, pruebas verificadas, pendientes e historial. Se actualiza tras cada avance importante.
+- **`AGENTS.md`** — punto de entrada: orden de lectura obligatoria y reglas duras.
+- **`instrucciones/`** — reglas permanentes por tema: arquitectura, normas de código, seguridad, pruebas, decisiones y tareas pendientes.
+
+Al trabajar en el proyecto, se leen `memoria.md` y `AGENTS.md` antes de tocar nada y documenta los cambios al terminar cada tarea. Los secretos nunca se guardan en estos archivos.
+
 ---
 
 ## Variables de entorno necesarias
 
 Copia `.dev.vars.example` como `.dev.vars` para desarrollo local.
 
-| Variable | Qué es |
-|---|---|
-| `VERIFY_TOKEN` | Token para verificar el webhook con Meta |
-| `APP_SECRET` | Clave secreta de la app de Meta (valida la firma de cada mensaje) |
-| `WHATSAPP_TOKEN` | Token de acceso a la API de WhatsApp |
-| `SESSION_SECRET` | Secreto para firmar sesiones (32+ caracteres) |
+| Variable | Qué es | Necesaria? |
+|---|---|---|
+| `SESSION_SECRET` | Secreto para firmar las sesiones de los paneles (32+ caracteres) | Sí |
+| `VERIFY_TOKEN` | Token para verificar el webhook con Meta | Para el bot |
+| `WHATSAPP_TOKEN` | Token de acceso a la API de WhatsApp | Para enviar mensajes reales |
+| `APP_SECRET` | Clave secreta de la app de Meta (valida la firma de cada webhook) | Recomendado |
+
+Sin `WHATSAPP_TOKEN` el bot funciona en **modo consola**: registra en los logs de Cloudflare lo que habría enviado, sin conectarse a WhatsApp.
 
 Las variables no secretas (nombre del salón, zona horaria, número de WhatsApp…) están en `wrangler.jsonc`.
 
