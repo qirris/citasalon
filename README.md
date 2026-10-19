@@ -87,6 +87,8 @@ npm run backup  # exporta una copia de la D1 de producción a backups/backup.sql
 
 En `datos-salon/` hay plantillas listas para rellenar (tipo de peluquería, nombre/dirección/teléfono, peluqueros con sus horarios y vacaciones, y servicios con duración y precio). Los datos se copian luego en *Ajustes* del panel.
 
+Para poner el sistema en marcha en un salón nuevo, sigue la guía paso a paso: `instrucciones/PUESTA_EN_MARCHA.md`.
+
 ## Copia de seguridad automática
 
 `.github/workflows/backup.yml` exporta la D1 de producción cada día a las 03:00 UTC (y a mano desde la pestaña *Actions*) y guarda el resultado como artefacto durante 30 días. El backup nunca se sube al repositorio (contiene teléfonos de clientes). Requiere dos secretos en el repositorio de GitHub: `CLOUDFLARE_API_TOKEN` (token de Cloudflare con permiso D1) y `CLOUDFLARE_ACCOUNT_ID`.

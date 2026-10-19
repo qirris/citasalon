@@ -34,3 +34,4 @@ Estado: proyecto funcional y desplegado; lo que queda depende de decisiones del 
 - [x] Horarios por peluquero: horario semanal propio y vacaciones por peluquero (el bot y los paneles lo respetan); +6 pruebas e2e (70/70).
 - [x] CI en GitHub Actions (`.github/workflows/ci.yml`): tipos + e2e en cada push/PR/manual.
 - [x] Plantillas de datos del salón en `datos-salon/` (`LEEME.md`, `01-salon.md`, `02-peluqueros.md`, `03-servicios.md`).
+- [x] Guía de puesta en marcha para un salón nuevo: `instrucciones/PUESTA_EN_MARCHA.md` (datos, D1, secretos, deploy, WhatsApp, comprobación, backup y entregables).

@@ -15,6 +15,7 @@ Bot de reservas de peluquería por WhatsApp + paneles `/admin`, `/recepcion` y c
    - `PRUEBAS.md` — comandos y procedimiento (`npm run check`, `npm run e2e`).
    - `DECISIONES.md` — por qué el código es así (no cambiar decisiones sin motivo).
    - `TAREAS_PENDIENTES.md` — qué queda por hacer y qué NO repetir.
+   - `PUESTA_EN_MARCHA.md` — guía paso a paso para poner el sistema en marcha en un salón nuevo.
 4. Comprobar el estado real del código y contrastarlo con la memoria. Si difieren: manda el código y actualiza `memoria.md`.
 5. Revisar `instrucciones/TAREAS_PENDIENTES.md` y continuar desde el último estado conocido.
 
