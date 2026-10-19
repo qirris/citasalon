@@ -26,3 +26,4 @@ Estado: proyecto funcional y desplegado; lo que queda depende de decisiones del 
 - [x] Sistema de memoria (`memoria.md`, `AGENTS.md`, `instrucciones/`).
 - [x] Sistema de memoria global de el equipo de desarrollo (skill + comando + AGENTS.md global).
 - [x] Repositorio git inicializado (commit `3b69ee1`); README actualizado con paneles, pruebas y sistema de memoria (commit `b244c3a`).
+- [x] Subido a GitHub: https://github.com/tu-usuario/citasalon (privado).

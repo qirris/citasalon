@@ -140,3 +140,4 @@ Cuando el usuario lo pida:
 - **2026-10-19** — Instalado el sistema de memoria persistente: `memoria.md`, `AGENTS.md`, `instrucciones/` (sin tocar código funcional).
 - **2026-10-19** — Se documentó el sistema de trabajo interno del proyecto.
 - **2026-10-19** — Inicializado repositorio git (commit inicial `3b69ee1`, 32 ficheros). README actualizado: paneles, pruebas, variables opcionales y sistema de memoria (commit `b244c3a`). Revisión visual de paneles pendiente.
+- **2026-10-19** — Repositorio subido a GitHub: https://github.com/tu-usuario/citasalon (privado, rama `master`, 3 commits). `gh` instalado y autenticado con la cuenta `qirris`.
