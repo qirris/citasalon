@@ -116,10 +116,8 @@ Pendientes/riesgos:
 
 1. **WhatsApp no activado** (decisión del usuario): falta `WHATSAPP_TOKEN` (obligatorio para enviar) y `APP_SECRET` (firma de webhooks, recomendado). Hasta entonces el bot está en modo consola. Luego hay que configurar la URL del webhook en Meta.
 2. **Variables de ejemplo en producción**: `wrangler.jsonc` sigue con "Peluqueria Ejemplo", dirección y teléfono de ejemplo, y `WHATSAPP_NUMBER=<NUMERO_DE_PRUEBA>` (número ficticio). Deben cambiarse a los datos reales del salón (afectan a `/qr`, mensajes del bot y avisos).
-3. **README sin actualizar**: describe el proyecto pero no documenta las rutas de los paneles ni el sistema de memoria.
-4. **Sin git**: el proyecto no es un repositorio git; no hay historial de versiones ni `.git` que proteja los cambios.
-5. `dev.log` y `.wrangler/` son residuos locales (ignorables; `.gitignore` ya existe).
-6. Recordatorio: las contraseñas de los paneles generadas durante el despliegue se le dieron al usuario en el chat; NO están guardadas en ningún `.md` (regla de seguridad). Si las pierde, se regeneran con `npx wrangler secret put ADMIN_PASSWORD` / `STAFF_PASSWORD`.
+3. `dev.log` y `.wrangler/` son residuos locales (ignorables; `.gitignore` ya existe).
+4. Recordatorio: las contraseñas de los paneles generadas durante el despliegue se le dieron al usuario en el chat; NO están guardadas en ningún `.md` (regla de seguridad). Si las pierde, se regeneran con `npx wrangler secret put ADMIN_PASSWORD` / `STAFF_PASSWORD`.
 
 ## 10. Próximos pasos
 
@@ -141,3 +139,4 @@ Cuando el usuario lo pida:
 - **2026-10-19** — Usuario decide NO activar WhatsApp por ahora.
 - **2026-10-19** — Instalado el sistema de memoria persistente: `memoria.md`, `AGENTS.md`, `instrucciones/` (sin tocar código funcional).
 - **2026-10-19** — Se documentó el sistema de trabajo interno del proyecto.
+- **2026-10-19** — Inicializado repositorio git (commit inicial `3b69ee1`, 32 ficheros). README actualizado: paneles, pruebas, variables opcionales y sistema de memoria (commit `b244c3a`). Revisión visual de paneles pendiente.
