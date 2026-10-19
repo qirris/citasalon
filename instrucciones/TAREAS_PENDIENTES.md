@@ -9,6 +9,7 @@ Estado: proyecto funcional y desplegado; lo que queda depende de decisiones del 
    - `npx wrangler secret put APP_SECRET` (validación de firma de webhooks; recomendado).
    - En Meta: URL de devolución `https://<tu-worker>.workers.dev/webhook`, token de verificación `<VERIFY_TOKEN_DE_PRUEBA>`.
 2. **Datos reales del salón**: `wrangler.jsonc` tiene valores de ejemplo ("Peluqueria Ejemplo", "Calle Ejemplo 1", "600 000 000", `WHATSAPP_NUMBER=<NUMERO_DE_PRUEBA>` ficticio, `WHATSAPP_PHONE_ID` de ejemplo). Cambiar y redeploy; el nombre/dirección/teléfono/servicios/horarios se pueden ajustar también desde `/admin/ajustes`.
+3. **Activar el backup automático**: añadir en GitHub los secretos `CLOUDFLARE_API_TOKEN` (token de Cloudflare con permiso D1) y `CLOUDFLARE_ACCOUNT_ID` (`<ACCOUNT_ID>`); luego el workflow `.github/workflows/backup.yml` funciona solo (diario 03:00 UTC) o a mano desde *Actions* → *Backup D1* → *Run workflow*.
 
 ## Opcionales / mejora continua
 
@@ -26,5 +27,6 @@ Estado: proyecto funcional y desplegado; lo que queda depende de decisiones del 
 - [x] Repositorio git inicializado (commit `3b69ee1`); README actualizado con paneles, pruebas y sistema de memoria (commit `b244c3a`).
 - [x] Subido a GitHub: https://github.com/tu-usuario/citasalon (privado, renombrado desde citasalon).
 - [x] Backup de D1: `npm run backup` (exporta a `backups/backup.sql`, carpeta fuera de git por privacidad).
+- [x] Backup automático: workflow `.github/workflows/backup.yml` (diario 03:00 UTC + manual) que exporta la D1 remota y sube el resultado como artefacto (30 días, nunca al repo); falta solo que el usuario añada los secretos de GitHub.
 - [x] Rate-limit por sesión e IP en todos los paneles (tabla `rate_limits`, 120/min sesión, 60/min IP, 429 con Retry-After); esquema aplicado a D1 remoto y desplegado.
 - [x] Revisión visual de los paneles: mejoras de CSS (scroll lateral, contraste del subtítulo, `aria-label` en el selector de fecha) y bug corregido (nombre/dirección/teléfono de Ajustes con comillas sobrantes); +2 guardas de regresión e2e (60/60); desplegado (versión `ac97fb1e`).

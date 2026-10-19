@@ -79,6 +79,10 @@ npm run backup  # exporta una copia de la D1 de producción a backups/backup.sql
 
 `test/e2e.mjs` es la especificación real del panel: cubre el bot, login y roles, agenda, CRUD completo, conflictos de horario, validaciones, ajustes, historial, CSP, bloqueo de login y rate-limit por sesión e IP.
 
+## Copia de seguridad automática
+
+`.github/workflows/backup.yml` exporta la D1 de producción cada día a las 03:00 UTC (y a mano desde la pestaña *Actions*) y guarda el resultado como artefacto durante 30 días. El backup nunca se sube al repositorio (contiene teléfonos de clientes). Requiere dos secretos en el repositorio de GitHub: `CLOUDFLARE_API_TOKEN` (token de Cloudflare con permiso D1) y `CLOUDFLARE_ACCOUNT_ID`.
+
 ---
 
 ## Sistema de memoria del proyecto
