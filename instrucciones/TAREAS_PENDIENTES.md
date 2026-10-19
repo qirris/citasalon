@@ -13,17 +13,17 @@ Estado: proyecto funcional y desplegado; lo que queda depende de decisiones del 
 ## Opcionales / mejora continua
 
 3. **Revisión visual** de los paneles en navegador (el e2e valida contenido y estructura, no el diseño CSS).
-4. Copia de seguridad periódica de D1 (`wrangler d1 export citasalon --remote --output backup.sql`).
-5. Considerar rate-limit por usuario (no solo por IP) si algún día se expone a Internet con tráfico real de staff.
 
 ## Hecho recientemente (no repetir)
 
 - [x] Módulos `auth.ts`, `config.ts`, `availability.ts`, `phone.ts`, `panels.ts`.
 - [x] Rutas `/admin`, `/recepcion`, `/qr` + auditoría + seguridad (CSRF, bloqueo, CSP).
-- [x] `npm run check` limpio; e2e 57/57.
+- [x] `npm run check` limpio; e2e 59/59.
 - [x] D1 de producción creada (id `<DATABASE_ID>`) + esquema.
 - [x] Worker publicado; secretos de panel/subida subidos (valores en manos del usuario).
 - [x] Sistema de memoria (`memoria.md`, `AGENTS.md`, `instrucciones/`).
 - [x] Sistema de memoria global de el equipo de desarrollo (skill + comando + AGENTS.md global).
 - [x] Repositorio git inicializado (commit `3b69ee1`); README actualizado con paneles, pruebas y sistema de memoria (commit `b244c3a`).
-- [x] Subido a GitHub: https://github.com/tu-usuario/citasalon (privado).
+- [x] Subido a GitHub: https://github.com/tu-usuario/citasalon (privado, renombrado desde citasalon).
+- [x] Backup de D1: `npm run backup` (exporta a `backups/backup.sql`, carpeta fuera de git por privacidad).
+- [x] Rate-limit por sesión e IP en todos los paneles (tabla `rate_limits`, 120/min sesión, 60/min IP, 429 con Retry-After); esquema aplicado a D1 remoto y desplegado.

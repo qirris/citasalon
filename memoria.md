@@ -18,8 +18,9 @@ Bot de reservas de peluquería por WhatsApp + panel de administración completo 
 - URL de producción: `https://<tu-worker>.workers.dev`
 - Rutas activas: `/health`, `/webhook`, `/admin`, `/recepcion`, `/qr`
 - `npm run check` (tsc --noEmit): limpio.
-- `npm run e2e` (test/e2e.mjs): **57/57 pruebas correctas** (local, con `npm run dev`).
+- `npm run e2e` (test/e2e.mjs): **59/59 pruebas correctas** (local, con `npm run dev`).
 - Verificado en vivo tras el despliegue: `/health` → `{"ok":true}`; `/qr` muestra SVG + título; `/admin` pide contraseña con CSP; login con la contraseña de admin → 303.
+- Rate-limit activo en producción (429 con `Retry-After` tras 120/min por sesión o 60/min por IP).
 
 ## 3. Tecnologías y arquitectura
 
@@ -49,7 +50,7 @@ Bot de reservas de peluquería por WhatsApp + panel de administración completo 
 
 ### Otros archivos clave
 
-- `schema.sql` — esquema D1 (tablas: appointments, sessions, processed_messages, settings, audit_log, login_attempts). Ejecutable varias veces.
+- `schema.sql` — esquema D1 (tablas: appointments, sessions, processed_messages, settings, audit_log, login_attempts, rate_limits). Ejecutable varias veces.
 - `test/e2e.mjs` — prueba de extremo a extremo completa (es la especificación real del panel).
 - `.dev.vars` — secretos locales de prueba (NO subir a git; existe `.dev.vars.example`).
 - `setup.ps1` / `instalar.bat` — instalación interactiva en Cloudflare.
@@ -77,6 +78,7 @@ Ver también: `instrucciones/NORMAS_DE_CODIGO.md`, `instrucciones/SEGURIDAD.md`,
 - Panel `/recepcion` (rol staff o admin): agenda, crear/editar/cancelar; NO puede borrar/restaurar/ajustes/historial (esas rutas devuelven 404 o la página de login de admin).
 - `/qr` público: cartel con código QR a wa.me + datos del salón.
 - Seguridad: sesiones firmadas HMAC 12 h, cookies HttpOnly/SameSite=Strict, bloqueo 15 min tras 5 fallos de login (429), comparación de contraseñas con HMAC constante, CSRF por comprobación de Origin, CSP restrictiva, SQL parametrizado, sin `<script>` en el panel.
+- Rate-limit deslizante 60 s en TODAS las rutas de panel: 120/min por sesión (clave `s:<sid>`), 60/min por IP (clave `i:<ip>`); 429 con `Retry-After: 60`; cookies falsificadas caen en el cubo de IP; purga en cron.
 - Auditoría: cada acción registra quién (Cliente (WhatsApp)/Recepción/Admin), qué (crear/editar/cancelar/restaurar/borrar/ajustes) y detalle.
 - Normalización de teléfonos españoles en panel Y en el webhook de WhatsApp (clave para que coincidan sesiones, citas y ediciones).
 
@@ -85,8 +87,8 @@ Ver también: `instrucciones/NORMAS_DE_CODIGO.md`, `instrucciones/SEGURIDAD.md`,
 En el repositorio `C:\Users\<usuario>\Documents\NEGOCIOS\bot\citasalon`:
 
 - **Creados**: `src/auth.ts`, `src/config.ts`, `src/availability.ts`, `src/phone.ts`, `src/panels.ts` (estos tres primeros faltaban y el proyecto ni compilaba).
-- **Modificados**: `src/index.ts` (rutas de panel vía `handlePanel`, normalización de teléfono, import de los módulos nuevos), `wrangler.jsonc` (database_id real de la D1 creada en producción).
-- **No tocados**: `bot.ts`, `db.ts`, `time.ts`, `types.ts`, `whatsapp.ts`, `reminders.ts`, `test/e2e.mjs`, `schema.sql`.
+- **Modificados**: `src/index.ts` (rutas de panel vía `handlePanel`, normalización de teléfono, import de los módulos nuevos), `wrangler.jsonc` (database_id real de la D1 creada en producción), `src/db.ts` (+`rateLimited` y purga de `rate_limits` en cleanup), `src/panels.ts` (+`rateGate`/`tooManyPage`, gancho al inicio de `handlePanel`), `schema.sql` (+tabla `rate_limits`), `package.json` (scripts `backup` y reset e2e con `rate_limits`), `test/e2e.mjs` (+2 pruebas de rate-limit).
+- **No tocados**: `bot.ts`, `time.ts`, `types.ts`, `whatsapp.ts`, `reminders.ts`, `availability.ts`, `config.ts`, `auth.ts`, `phone.ts`.
 - **Creados (documentación)**: `memoria.md`, `AGENTS.md`, `instrucciones/` (ver sección 11).
 
 
@@ -100,13 +102,16 @@ En el repositorio `C:\Users\<usuario>\Documents\NEGOCIOS\bot\citasalon`:
 - **Panel sin JavaScript**: formularios HTML + redirecciones 303 con `?ok=...` para mensajes de éxito. Más simple, más seguro, y así lo exige la prueba e2e.
 - **Normalizar el teléfono en el webhook** (no solo en el panel): si un panel cambia el teléfono de una cita a `+34…`, las próximas interacciones de ese cliente por WhatsApp (que llegan como `34…`) siguen encontrando su sesión y sus citas.
 - **Defaults de configuración**: servicios `corte_mujer` (45′), `corte_hombre` (30′), `tinte` (90′); peluqueros Ana y Luis; horario 10:00-20:00 lunes-sábado, domingo cerrado; 15 min por hueco; 30 días por delante; antelación mínima 60 min; 5 citas máximas por cliente.
+- **Rate-limit: por sesión con IP de respaldo**: la clave es la cookie `sid` completa si la sesión es válida (cada sesión su propio cubo), si no la IP. Así el staff que comparte NAT no se pisa y una cookie falsificada no permite rotar cubo. Ventana deslizante contando filas (<60 s), una inserción por petición aceptada, sin inserción al bloquear (el atacante no alarga su propia ventana).
 
 ## 8. Pruebas verificadas
 
 - `npm run check` → sin errores TypeScript (verificado 2026-10-19 tras cada cambio).
-- `npm run e2e` → **57/57** (2026-10-19): bots, login/roles/forged-cookie/CSRF, agenda, CRUD completo, conflictos 409, validaciones 422, ajustes + efecto en el bot, historial, CSP, bloqueo 429, logout.
-- Producción (2026-10-19): `/health`, `/qr`, `/admin` y login real con la contraseña de admin generada (303) — verificado con Invoke-WebRequest.
+- `npm run e2e` → **59/59** (2026-10-19): bots, login/roles/forged-cookie/CSRF, agenda, CRUD completo, conflictos 409, validaciones 422, ajustes + efecto en el bot, historial, CSP, bloqueo 429, logout, rate-limit por sesión e IP.
+- Producción (2026-10-19): `/health`, `/qr`, `/admin` y login real con la contraseña de admin generada (303) — verificado con Invoke-WebRequest. Rate-limit verificado en vivo (2 pruebas de e2e remotas pasan: 429 por sesión y por IP).
+- NOTA: el e2e completo contra producción falla en login/CRUD porque la producción NO tiene secretos de panel ni `APP_SECRET` (decisión del usuario de no activar WhatsApp); es esperado, no una regresión. El e2e completo es contra local.
 - Procedimiento local reproducible: `npx wrangler d1 execute citasalon --local --file=schema.sql`, `npm run dev` (puerto 8787), `npm run e2e`.
+- Backup verificado: `npm run backup` exporta el D1 remoto a `backups/backup.sql` (carpeta fuera de git).
 
 ## 9. Errores y problemas pendientes
 
@@ -116,8 +121,9 @@ Pendientes/riesgos:
 
 1. **WhatsApp no activado** (decisión del usuario): falta `WHATSAPP_TOKEN` (obligatorio para enviar) y `APP_SECRET` (firma de webhooks, recomendado). Hasta entonces el bot está en modo consola. Luego hay que configurar la URL del webhook en Meta.
 2. **Variables de ejemplo en producción**: `wrangler.jsonc` sigue con "Peluqueria Ejemplo", dirección y teléfono de ejemplo, y `WHATSAPP_NUMBER=<NUMERO_DE_PRUEBA>` (número ficticio). Deben cambiarse a los datos reales del salón (afectan a `/qr`, mensajes del bot y avisos).
-3. `dev.log` y `.wrangler/` son residuos locales (ignorables; `.gitignore` ya existe).
-4. Recordatorio: las contraseñas de los paneles generadas durante el despliegue se le dieron al usuario en el chat; NO están guardadas en ningún `.md` (regla de seguridad). Si las pierde, se regeneran con `npx wrangler secret put ADMIN_PASSWORD` / `STAFF_PASSWORD`.
+3. **Producción sin secretos de panel**: `ADMIN_PASSWORD`/`STAFF_PASSWORD`/`SESSION_SECRET`/`VERIFY_TOKEN` NO están puestos con `wrangler secret put` en el worker remoto (solo en `.dev.vars` local). Por eso el e2e remoto falla en login. Cuando el usuario quiera usar los paneles en producción: `npx wrangler secret put ADMIN_PASSWORD` etc.
+4. `dev.log`, `dev-server.log`, `dev-err.log`, `dev-server.pid` y `.wrangler/` son residuos locales (ignorables; `.gitignore` ya existe).
+5. Recordatorio: las contraseñas de los paneles generadas durante el despliegue se le dieron al usuario en el chat; NO están guardadas en ningún `.md` (regla de seguridad). Si las pierde, se regeneran con `npx wrangler secret put ADMIN_PASSWORD` / `STAFF_PASSWORD`.
 
 ## 10. Próximos pasos
 
@@ -125,9 +131,10 @@ Cuando el usuario lo pida:
 
 1. Activar WhatsApp: `npx wrangler secret put WHATSAPP_TOKEN` (+ `APP_SECRET`) y configurar el webhook en Meta (`https://<tu-worker>.workers.dev/webhook`, token `<VERIFY_TOKEN_DE_PRUEBA>`).
 2. Cambiar las vars de salón reales (`SALON_NAME`, `SALON_ADDRESS`, `SALON_PHONE`, `WHATSAPP_NUMBER`, `WHATSAPP_PHONE_ID`) y redesplegar.
-3. Opcional: poner los datos reales vía `/admin/ajustes` (nombre, dirección, teléfono, servicios, peluqueros, horarios).
-4. Opcional: documentar los paneles en el README; inicializar git.
-5. Opcional: revisar el aspecto visual de los paneles en el navegador (el e2e valida contenido, no el diseño).
+3. Poner los secretos de panel en producción (`ADMIN_PASSWORD`, `STAFF_PASSWORD`, `SESSION_SECRET`, `VERIFY_TOKEN`) para que los paneles funcionen en el worker remoto.
+4. Opcional: poner los datos reales vía `/admin/ajustes` (nombre, dirección, teléfono, servicios, peluqueros, horarios).
+5. Revisión visual de los paneles en el navegador (el e2e valida contenido, no el diseño).
+6. Copia de seguridad periódica: `npm run backup` (manual por ahora; se podría programar con un cron de GitHub Actions o similar).
 
 ## 11. Historial de actualizaciones
 
@@ -141,3 +148,6 @@ Cuando el usuario lo pida:
 - **2026-10-19** — Se documentó el sistema de trabajo interno del proyecto.
 - **2026-10-19** — Inicializado repositorio git (commit inicial `3b69ee1`, 32 ficheros). README actualizado: paneles, pruebas, variables opcionales y sistema de memoria (commit `b244c3a`). Revisión visual de paneles pendiente.
 - **2026-10-19** — Repositorio subido a GitHub: https://github.com/tu-usuario/citasalon (privado, rama `master`, 3 commits). `gh` instalado y autenticado con la cuenta `qirris`.
+- **2026-10-19** — Renombrado el repo en GitHub a `bot-whatsapp` (https://github.com/tu-usuario/citasalon); remote local actualizado; commits de memoria y de GitHub push (`c0ffbf6`).
+- **2026-10-19** — Backup de D1: script `npm run backup` (exporta a `backups/backup.sql`, carpeta fuera de git por privacidad de teléfonos); commit `326c8c1`.
+- **2026-10-19** — Rate-limit por sesión e IP: tabla `rate_limits` (ventana deslizante 60 s, 120/min sesión, 60/min IP), `db.rateLimited`, `rateGate`/`tooManyPage` en `panels.ts` (aplica a login, logout, `/qr` y todas las rutas de panel), purga en cron, +2 pruebas e2e (**59/59**), esquema aplicado a D1 remoto y desplegado (versión `f37b500e`). Rate-limit verificado en vivo en producción (las 2 pruebas remotas pasan); el resto del e2e remoto falla por falta de secretos de panel en producción (esperado, documentado).

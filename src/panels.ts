@@ -12,6 +12,10 @@ import type { Appt, Env, Service, Settings } from "./types.ts";
 
 const CSP = "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; form-action 'self'; frame-ancestors 'none'; base-uri 'none'";
 
+const RATE_WINDOW_MS = 60_000;
+const RATE_SESSION_LIMIT = 120;
+const RATE_IP_LIMIT = 60;
+
 const OK_TEXT: Record<string, string> = {
   creada: "Cita creada.",
   guardada: "Cita guardada.",
@@ -523,6 +527,24 @@ function ipOf(req: Request): string {
   return req.headers.get("CF-Connecting-IP") ?? "local";
 }
 
+function tooManyPage(): string {
+  return `<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demasiadas peticiones</title><style>${css}</style></head>
+<body><div class="login-wrap"><div class="login">
+<h1>Demasiadas peticiones</h1>
+<p class="sub">Has hecho demasiadas peticiones en poco tiempo. Espera un minuto y vuelve a probar.</p>
+</div></div></body></html>`;
+}
+
+async function rateGate(req: Request, env: Env, session: PanelRole | null, now: Date): Promise<boolean> {
+  const sid = (req.headers.get("Cookie") ?? "").match(/(?:^|;\s*)sid=([^;]+)/)?.[1] ?? "";
+  const key = session ? `s:${sid}` : `i:${ipOf(req)}`;
+  const limit = session ? RATE_SESSION_LIMIT : RATE_IP_LIMIT;
+  return db.rateLimited(env.DB, key, now, limit, RATE_WINDOW_MS);
+}
+
 async function doLogin(req: Request, env: Env, base: string): Promise<Response> {
   if (badOrigin(req)) return new Response("Origen no permitido", { status: 403 });
   const now = nowLocal(env.SALON_TZ);
@@ -606,15 +628,22 @@ async function editAppt(
 export async function handlePanel(req: Request, env: Env): Promise<Response | null> {
   const url = new URL(req.url);
   const p = url.pathname;
-  if (p === "/qr" && req.method === "GET") return qrPage(env);
   if (p === "/") return redirect("/admin/");
   const base = p === "/admin" || p.startsWith("/admin/") ? "/admin"
     : p === "/recepcion" || p.startsWith("/recepcion/") ? "/recepcion" : null;
-  if (!base) return null;
+  if (!base && p !== "/qr") return null;
 
-  const segs = p.slice(base.length).split("/").filter(Boolean);
+  const segs = base ? p.slice(base.length).split("/").filter(Boolean) : [];
   const sub = segs[0] ?? "";
   const now = nowLocal(env.SALON_TZ);
+
+  const session = await readSession(env, req);
+  if (await rateGate(req, env, session, now)) {
+    return html(tooManyPage(), 429, { "retry-after": "60" });
+  }
+
+  if (p === "/qr" && req.method === "GET") return qrPage(env);
+  if (!base) return null;
 
   if (sub === "login") {
     if (req.method !== "POST") return html(loginPage(env, base));
@@ -624,7 +653,6 @@ export async function handlePanel(req: Request, env: Env): Promise<Response | nu
     return redirect(base + "/login", { "set-cookie": clearCookie });
   }
 
-  const session = await readSession(env, req);
   const need: PanelRole = base === "/admin" ? "admin" : "staff";
   const allowed = session !== null && (need === "admin" ? session === "admin" : true);
 

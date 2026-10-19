@@ -14,6 +14,15 @@
 - `/admin` exige rol admin; `/recepcion` admite staff o admin. Páginas GET sin permiso → página de login (con "Contraseña"); POST sin permiso → 401.
 - Login: comprobación de `Origin` contra el host de la petición (403 si difiere) ANTES de tocar la contraseña; bloqueo 429 tras 5 fallos en 15 min por IP (`login_attempts`); fallo registrado y limpieza de intentos al acertar.
 
+## Rate-limit de paneles
+
+- Ventana deslizante de 60 s en `rate_limits` (una fila por petición aceptada; clave + instante).
+- Clave: `s:<cookie sid completa>` si hay sesión válida (cada sesión su propio cubo → el staff que comparte IP no se pisa); si no, `i:<IP>` (`CF-Connecting-IP`, o `local` en desarrollo).
+- Límites: **120 peticiones/min por sesión** y **60/min por IP** → 429 con `Retry-After: 60` y página propia.
+- Se aplica a TODAS las rutas de panel (login, logout, `/qr`, agenda, etc.) antes de cualquier lógica; cookies falsificadas caen en el cubo de IP (no se puede rotar cubo cambiando la cookie).
+- Las peticiones rechazadas NO insertan fila (no alargan su propia ventana); el cron purga filas de más de 10 min.
+- Verificado en e2e (59 pruebas): sesión agotada → 429; IP agotada en `/qr` → 429.
+
 ## Webhook de WhatsApp
 
 - GET: verificar `hub.verify_token` contra `VERIFY_TOKEN` con `safeEqual`.
@@ -34,4 +43,4 @@
 - Si se pierde una contraseña de panel: regenerar con `wrangler secret put ADMIN_PASSWORD` / `STAFF_PASSWORD` (no está copiada en ningún sitio).
 - `SESSION_SECRET` compromise ⇒ regenerar (invalida todas las sesiones).
 - Activar `APP_SECRET` en producción en cuanto se conecte WhatsApp real.
-- El proyecto NO está en git: no hay historial ni rollback fácil (ver pendientes).
+- Producción no tiene secretos de panel aún (por eso el e2e remoto falla en login): configurar con `wrangler secret put` cuando el usuario lo decida.

@@ -203,11 +203,23 @@ export async function clearAttempts(db: D1Database, ip: string) {
   await db.prepare("DELETE FROM login_attempts WHERE ip=?").bind(ip).run();
 }
 
+export async function rateLimited(
+  db: D1Database, key: string, now: Date, limit: number, windowMs: number,
+): Promise<boolean> {
+  const ts = (d: Date): string => d.toISOString().slice(0, 19);
+  const row = await db.prepare("SELECT COUNT(*) AS n FROM rate_limits WHERE key = ? AND at > ?")
+    .bind(key, ts(new Date(now.getTime() - windowMs))).first<{ n: number }>();
+  if ((row?.n ?? 0) >= limit) return true;
+  await db.prepare("INSERT INTO rate_limits(key, at) VALUES (?, ?)").bind(key, ts(now)).run();
+  return false;
+}
+
 export async function cleanup(db: D1Database, now: Date) {
   await db.batch([
     db.prepare("DELETE FROM processed_messages WHERE created_at < ?").bind(iso(addMin(now, -3 * 1440))),
     db.prepare("DELETE FROM sessions WHERE updated_at < ?").bind(iso(addMin(now, -1440))),
     db.prepare("DELETE FROM login_attempts WHERE at < ?").bind(iso(addMin(now, -1440))),
+    db.prepare("DELETE FROM rate_limits WHERE at < ?").bind(iso(addMin(now, -10))),
     db.prepare("DELETE FROM audit_log WHERE at < ?").bind(iso(addMin(now, -365 * 1440))),
   ]);
 }

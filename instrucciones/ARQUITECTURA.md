@@ -40,6 +40,7 @@ Todo funciona también con texto libre ("corte mujer", "por la tarde", "a las 5"
 - `settings` — pares clave/valor JSON (servicios, peluqueros, horarios, reglas).
 - `audit_log` — quién hizo qué (role whatsapp/staff/admin, action crear/editar/cancelar/restaurar/borrar/ajustes).
 - `login_attempts` — intentos fallidos por IP (bloqueo 15 min).
+- `rate_limits` — una fila por petición de panel aceptada (clave `s:<sid>` o `i:<ip>` + instante con segundos); ventana deslizante 60 s, 120/min por sesión y 60/min por IP; purga en cron (>10 min).
 
 ## Fechas "de pared"
 

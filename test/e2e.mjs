@@ -192,6 +192,16 @@ const idFromLoc = (t) => Number((t.match(/\/cita\/(\d+)"/) ?? [])[1]);
   ok(last === 429, "Tras 5 contraseñas erróneas se bloquea el acceso 15 min (429)");
   ok((await admin.req("/recepcion/logout", { method: "POST", form: {} })).status === 303, "Cerrar sesión funciona");
 
+  section("Rate-limit (429 tras superar el límite)");
+  const hammer = new Session();
+  await hammer.req("/recepcion/login", { method: "POST", form: { password: vars.STAFF_PASSWORD } });
+  let blocked = false;
+  for (let i = 0; i < 130 && !blocked; i++) blocked = (await hammer.req("/recepcion")).status === 429;
+  ok(blocked, "Rate-limit por sesión: 429 tras superar 120 peticiones/minuto");
+  let ipBlocked = false;
+  for (let i = 0; i < 80 && !ipBlocked; i++) ipBlocked = (await fetch(`${BASE}/qr`)).status === 429;
+  ok(ipBlocked, "Rate-limit por IP: 429 en rutas públicas tras superar el límite");
+
   console.log(`\n${failed ? "✗" : "✓"} ${passed} pruebas correctas, ${failed} fallidas`);
   process.exit(failed ? 1 : 0);
 })();

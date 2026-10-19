@@ -62,7 +62,7 @@ Además del bot, el Worker sirve tres rutas web:
 | `/recepcion` | staff o admin | Agenda, crear/editar/cancelar citas. No puede borrar, restaurar, ver ajustes ni historial |
 | `/qr` | público | Cartel con código QR hacia wa.me con los datos del salón |
 
-Los paneles son formularios HTML + redirecciones 303, sin JavaScript en el navegador (más seguros y sin dependencias). Seguridad: cookies HttpOnly/SameSite=Strict, bloqueo de login tras 5 fallos, CSRF por comprobación de Origin, CSP restrictiva y SQL parametrizado.
+Los paneles son formularios HTML + redirecciones 303, sin JavaScript en el navegador (más seguros y sin dependencias). Seguridad: cookies HttpOnly/SameSite=Strict, bloqueo de login tras 5 fallos, rate-limit por sesión e IP (120/min y 60/min, ventana de 60 s), CSRF por comprobación de Origin, CSP restrictiva y SQL parametrizado.
 
 Las contraseñas de los paneles se configuran como secretos (`ADMIN_PASSWORD` y `STAFF_PASSWORD`) con `npx wrangler secret put`.
 
@@ -73,10 +73,11 @@ Las contraseñas de los paneles se configuran como secretos (`ADMIN_PASSWORD` y 
 ```powershell
 npm run check   # TypeScript en modo estricto (sin emitir)
 npm run dev     # terminal 1: servidor local en el puerto 8787
-npm run e2e     # terminal 2: prueba de extremo a extremo (57 pruebas)
+npm run e2e     # terminal 2: prueba de extremo a extremo (59 pruebas)
+npm run backup  # exporta una copia de la D1 de producción a backups/backup.sql
 ```
 
-`test/e2e.mjs` es la especificación real del panel: cubre el bot, login y roles, agenda, CRUD completo, conflictos de horario, validaciones, ajustes, historial, CSP y bloqueo de login.
+`test/e2e.mjs` es la especificación real del panel: cubre el bot, login y roles, agenda, CRUD completo, conflictos de horario, validaciones, ajustes, historial, CSP, bloqueo de login y rate-limit por sesión e IP.
 
 ---
 

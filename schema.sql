@@ -50,3 +50,9 @@ CREATE TABLE IF NOT EXISTS login_attempts (
   at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_login_ip ON login_attempts(ip);
+
+CREATE TABLE IF NOT EXISTS rate_limits (
+  key TEXT NOT NULL,
+  at  TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_rate_key ON rate_limits(key);
