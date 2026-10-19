@@ -1,0 +1,30 @@
+{
+  "name": "citasalon",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-09-01",
+
+  // Datos no secretos. Los secretos (token de WhatsApp, contraseñas...) se guardan aparte
+  // con "wrangler secret" y NUNCA se escriben aquí. Ver README.
+  "vars": {
+    "SALON_NAME": "Peluqueria Ejemplo",
+    "SALON_ADDRESS": "Calle Ejemplo 1",
+    "SALON_PHONE": "600 000 000",
+    "SALON_TZ": "Europe/Madrid",
+    "WHATSAPP_PHONE_ID": "<PHONE_NUMBER_ID>",
+    "WHATSAPP_NUMBER": "<NUMERO_DE_PRUEBA>",
+    "GRAPH_VERSION": "v25.0",
+    "REMINDER_TEMPLATE": "",
+    "REMINDER_TEMPLATE_LANG": "es"
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "citasalon",
+      "database_id": "<DATABASE_ID>"
+    }
+  ],
+
+  // Cada 10 minutos: envía recordatorios y limpia datos antiguos
+  "triggers": { "crons": ["*/10 * * * *"] }
+}
