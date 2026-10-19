@@ -191,6 +191,31 @@ const idFromLoc = (t) => Number((t.match(/\/cita\/(\d+)"/) ?? [])[1]);
   ok(savedAjustes.includes("Salón Nuevo") && !savedAjustes.includes("&quot;Salón Nuevo&quot;"), "Los ajustes quedan guardados sin comillas sobrantes");
   ok((await admin.req("/qr")).text.includes("<strong>Salón Nuevo</strong>"), "El cartel QR muestra el nombre limpio");
 
+  section("Horarios por peluquero (admin) y efecto en el bot");
+  const perStylist = { ...newSettings, stylists: "Ana, Luis",
+    hours0: "10:00-14:00", hours1: "10:00-14:00", hours2: "10:00-14:00", hours3: "10:00-14:00",
+    hours4: "10:00-14:00", hours5: "10:00-14:00", hours6: "10:00-14:00", closedDates: "" };
+  for (let i = 0; i < 7; i++) { perStylist[`sh|Ana|${i}`] = "10:00-12:00"; perStylist[`sh|Luis|${i}`] = "16:00-18:00"; }
+  perStylist["sc|Ana"] = DAY2; perStylist["sc|Luis"] = "";
+  r = await admin.req("/admin/ajustes", { method: "POST", form: perStylist });
+  ok(r.status === 303 && r.loc.includes("ok=ajustes"), "Admin guarda horarios y vacaciones por peluquero");
+  const stForm = (await admin.req("/admin/ajustes")).text;
+  ok(stForm.includes('name="sh|Ana|0"') && stForm.includes("10:00-12:00") && stForm.includes("Horario de Ana"), "Ajustes muestra el horario propio de cada peluquero");
+  r = await admin.req("/admin/nueva", { method: "POST", form: { date: DAY, time: "10:00", service_id: "corte", stylist: "Luis", name: "Test Luis", phone: "", notes: "" } });
+  ok(r.status === 422 && r.text.includes("no trabaja"), "Un peluquero fuera de su horario no acepta la cita");
+  r = await admin.req("/admin/nueva", { method: "POST", form: { date: DAY2, time: "10:00", service_id: "corte", stylist: "Ana", name: "Test Vac", phone: "", notes: "" } });
+  ok(r.status === 422 && r.text.includes("no trabaja"), "Las vacaciones del peluquero bloquean la cita");
+  const pE = "34655000005";
+  await wa(pE, { id: "menu:book" }, "Eva Marín");
+  await wa(pE, { id: "svc:corte" }, "Eva Marín");
+  await wa(pE, { id: `day:${DAY}` }, "Eva Marín");
+  await wa(pE, { text: "13:00" }, "Eva Marín");
+  ok(!(await admin.req(`/admin?date=${DAY}`)).text.includes("Eva Marín"), "El bot no reserva fuera del horario de los peluqueros (13:00)");
+  await wa(pE, { text: "10:00" }, "Eva Marín");
+  await wa(pE, { id: "name:yes" }, "Eva Marín");
+  await wa(pE, { id: "confirm:yes" }, "Eva Marín");
+  ok((await admin.req(`/admin?date=${DAY}`)).text.includes("Eva Marín"), "El bot reserva dentro del horario del peluquero (10:00)");
+
   section("Historial y seguridad");
   const hist = (await admin.req("/admin/historial")).text;
   ok(["crear", "editar", "cancelar", "restaurar", "borrar", "ajustes"].every((a) => hist.includes(a)), "El historial recoge crear/editar/cancelar/restaurar/borrar/ajustes");

@@ -3,6 +3,7 @@ import { loadSettings, saveSettings } from "./config.ts";
 import { cleanName } from "./bot.ts";
 import { badOrigin, clearCookie, readSession, safeEqual, sessionCookie, type PanelRole } from "./auth.ts";
 import { displayPhone, normalizePhone } from "./phone.ts";
+import { stylistClosed, stylistSpans } from "./availability.ts";
 import { renderSVG } from "uqr";
 import {
   DAYS, addMin, atTime, dayStr, fmtDay, hhmm, iso, isValidDay, isValidTime, nowLocal,
@@ -390,15 +391,21 @@ function validate(v: ApptForm, s: Settings): Valid {
 
   if (isValidDay(v.date) && isValidTime(v.time) && service) {
     start = parseDT(`${v.date}T${v.time}`);
-    const day = parseDay(v.date);
     if (s.closedDates.includes(v.date)) {
       errs.push("El salón está cerrado ese día.");
     } else {
-      const spans = s.hours[weekday(day)] ?? [];
+      const day = parseDay(v.date);
       const from = start;
       const end = addMin(from, service.minutes);
-      const fits = spans.some(([a, b]) => atTime(day, a).getTime() <= from.getTime() && end.getTime() <= atTime(day, b).getTime());
-      if (!fits) errs.push("Esa hora está fuera del horario de apertura.");
+      const inHours = (st: string) =>
+        stylistSpans(s, st, weekday(day)).some(([a, b]) => atTime(day, a).getTime() <= from.getTime() && end.getTime() <= atTime(day, b).getTime());
+      if (v.stylist) {
+        if (stylistClosed(s, v.stylist, v.date) || !inHours(v.stylist)) {
+          errs.push("Ese peluquero no trabaja a esa hora ese día.");
+        }
+      } else if (!s.stylists.some((st) => !stylistClosed(s, st, v.date) && inHours(st))) {
+        errs.push("Esa hora está fuera del horario de apertura.");
+      }
     }
   }
   return { errs, name: name ?? "", phone: phone ?? "", service, start: errs.length ? undefined : start };
@@ -453,6 +460,39 @@ function parseSettings(fd: FormData, cur: Settings): { s?: Settings; errs: strin
     else closedDates.push(t);
   }
 
+  const stylistHours: Record<string, Record<number, [string, string][]>> = {};
+  const stylistClosedDates: Record<string, string[]> = {};
+  for (const [key, value] of fd.entries()) {
+    if (typeof value !== "string") continue;
+    if (key.startsWith("sh|")) {
+      const [, enc, day] = key.split("|");
+      const st = decodeURIComponent(enc);
+      const i = Number(day);
+      const raw = value.trim();
+      if (!raw || !Number.isInteger(i) || i < 0 || i > 6) continue;
+      const spans: [string, string][] = [];
+      for (const chunk of raw.split(" y ")) {
+        const m = chunk.trim().match(/^(\d{2}:\d{2})-(\d{2}:\d{2})$/);
+        if (!m || !isValidTime(m[1]) || !isValidTime(m[2]) || m[1] >= m[2]) {
+          errs.push(`El horario de ${st} (${DAYS[i]}) «${chunk.trim()}» no es un tramo válido (usa HH:MM-HH:MM).`);
+          continue;
+        }
+        spans.push([m[1], m[2]]);
+      }
+      if (spans.length) (stylistHours[st] ??= {})[i] = spans;
+    } else if (key.startsWith("sc|")) {
+      const st = decodeURIComponent(key.slice(3));
+      const dates: string[] = [];
+      for (const line of value.split(/\r?\n/)) {
+        const t = line.trim();
+        if (!t) continue;
+        if (!isValidDay(t)) errs.push(`Fecha de vacaciones de ${st} no válida: «${t}» (usa AAAA-MM-DD).`);
+        else dates.push(t);
+      }
+      if (dates.length) stylistClosedDates[st] = dates;
+    }
+  }
+
   const num = (name: string, min: number, max: number): number => {
     const n = Number(fd.get(name));
     if (!Number.isInteger(n) || n < min || n > max) {
@@ -478,7 +518,7 @@ function parseSettings(fd: FormData, cur: Settings): { s?: Settings; errs: strin
   if (errs.length) return { errs };
   return {
     s: {
-      salonName, address, phone, services, stylists, hours, closedDates,
+      salonName, address, phone, services, stylists, hours, stylistHours, stylistClosedDates, closedDates,
       slotMinutes, maxDaysAhead, minNoticeMinutes, maxActive, sessionTtlMinutes,
     },
     errs,
@@ -491,6 +531,23 @@ function settingsForm(s: Settings, raw: Record<string, string>, errs: string[]):
   const closedText = raw.closedDates ?? s.closedDates.join("\n");
   const hours = DAYS.map((d, i) => `<span>${d.charAt(0).toUpperCase() + d.slice(1)}</span>
 <input type="text" name="hours${i}" value="${val(`hours${i}`, hoursText(s)[i])}" placeholder="10:00-20:00 o vacío si cierras">`).join("\n");
+  const stylistBlocks = s.stylists.map((st) => {
+    const key = encodeURIComponent(st);
+    const hrs = s.stylistHours[st] ?? {};
+    const cells = DAYS.map((d, i) => {
+      const dflt = (hrs[i] ?? []).map(([a, b]) => `${a}-${b}`).join(" y ");
+      return `<span>${d.charAt(0).toUpperCase() + d.slice(1)}</span>
+<input type="text" name="sh|${key}|${i}" value="${val(`sh|${key}|${i}`, dflt)}" placeholder="vacío = sigue el horario general">`;
+    }).join("\n");
+    const closedDflt = (s.stylistClosedDates[st] ?? []).join("\n");
+    return `<div class="card">
+    <h2 style="margin-top:0">Horario de ${esc(st)}</h2>
+    <p class="note">Si rellenas algún día aquí, los que dejes vacíos serán su día libre. Si lo dejas todo vacío, ${esc(st)} sigue el horario general del salón.</p>
+    <div class="hours">${cells}</div>
+    <label for="a-c-${key}">Vacaciones de ${esc(st)} (uno por línea, AAAA-MM-DD)</label>
+    <textarea id="a-c-${key}" name="sc|${key}" rows="2" spellcheck="false">${esc(raw[`sc|${key}`] ?? closedDflt)}</textarea>
+  </div>`;
+  }).join("\n");
 
   return `
 <h1>Ajustes</h1>
@@ -518,6 +575,7 @@ ${errors(errs)}
     <label for="a-closed">Días cerrados (uno por línea, AAAA-MM-DD)</label>
     <textarea id="a-closed" name="closedDates" rows="3" spellcheck="false">${esc(closedText)}</textarea>
   </div>
+  ${stylistBlocks}
   <div class="card">
     <h2 style="margin-top:0">Reglas de reserva</h2>
     <div class="grid2">

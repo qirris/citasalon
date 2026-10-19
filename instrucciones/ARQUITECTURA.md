@@ -25,7 +25,7 @@ Todo funciona también con texto libre ("corte mujer", "por la tarde", "a las 5"
 | `panels.ts` | Todo el HTML/CRUD de los paneles; valida, usa `db.*` y escribe auditoría |
 | `bot.ts` | Mensajes y transiciones; usa `availability.ts`, `db.*`, `loadSettings` |
 | `db.ts` | Única capa SQL; choques de citas atómicos (comprobación dentro del INSERT/UPDATE) |
-| `availability.ts` | `freeSlots` / `daysWithAvailability` (horario + citas existentes + antelación) |
+| `availability.ts` | `freeSlots` / `daysWithAvailability` (horario general + horario propio y vacaciones por peluquero + citas existentes + antelación); helpers `stylistSpans`/`stylistClosed` |
 | `config.ts` | Settings de la BD (tabla `settings`) con defaults en código |
 | `auth.ts` | HMAC, cookies de sesión firmadas, comprobación de Origin |
 | `phone.ts` | Normalización `346…` → `+346…` y formato de display |
@@ -37,7 +37,7 @@ Todo funciona también con texto libre ("corte mujer", "por la tarde", "a las 5"
 - `appointments` — citas (status confirmed/cancelled, source whatsapp/admin/staff, choques por stylist+tramo).
 - `sessions` — estado de conversación por teléfono (TTL desde settings, limpieza en cron).
 - `processed_messages` — deduplicación de webhooks de Meta (idempotencia).
-- `settings` — pares clave/valor JSON (servicios, peluqueros, horarios, reglas).
+- `settings` — pares clave/valor JSON (servicios, peluqueros, horario general, `stylistHours`/`stylistClosedDates` por peluquero, reglas).
 - `audit_log` — quién hizo qué (role whatsapp/staff/admin, action crear/editar/cancelar/restaurar/borrar/ajustes).
 - `login_attempts` — intentos fallidos por IP (bloqueo 15 min).
 - `rate_limits` — una fila por petición de panel aceptada (clave `s:<sid>` o `i:<ip>` + instante con segundos); ventana deslizante 60 s, 120/min por sesión y 60/min por IP; purga en cron (>10 min).

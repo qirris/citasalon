@@ -30,10 +30,10 @@ Busca las citas de las próximas 24 horas y envía un recordatorio por WhatsApp 
 Funciones para enviar mensajes a través de la API de WhatsApp (Meta Graph API): texto libre, mensajes con botones, listas y plantillas.
 
 ### `src/availability.ts`
-Calcula los huecos libres de cada peluquero para un día dado, teniendo en cuenta las citas ya existentes y el horario configurado.
+Calcula los huecos libres de un día teniendo en cuenta las citas ya existentes, el horario de cada peluquero (con su horario propio si lo tiene, y sus vacaciones) y el horario general del salón.
 
 ### `src/config.ts`
-Carga y guarda la configuración del salón desde la base de datos: nombre, teléfono, servicios, peluqueros, horario y festivos.
+Carga y guarda la configuración del salón desde la base de datos: nombre, teléfono, servicios, peluqueros, horario general, horario propio y vacaciones de cada peluquero, y festivos.
 
 ### `src/time.ts`
 Utilidades de fechas y horas: convertir zonas horarias, formatear horas, sumar minutos, validar fechas, etc.
@@ -58,7 +58,7 @@ Además del bot, el Worker sirve tres rutas web:
 
 | Ruta | Rol | Qué hace |
 |---|---|---|
-| `/admin` | admin | Agenda diaria con estadísticas, crear/editar/cancelar/restaurar/borrar citas, buscador, ajustes completos del salón, historial de auditoría e informes con ingresos y export CSV |
+| `/admin` | admin | Agenda diaria con estadísticas, crear/editar/cancelar/restaurar/borrar citas, buscador, ajustes completos del salón (incl. horarios por peluquero), historial de auditoría e informes con ingresos y export CSV |
 | `/recepcion` | staff o admin | Agenda, crear/editar/cancelar citas. No puede borrar, restaurar, ver ajustes ni historial |
 | `/qr` | público | Cartel con código QR hacia wa.me con los datos del salón |
 
@@ -73,11 +73,19 @@ Las contraseñas de los paneles se configuran como secretos (`ADMIN_PASSWORD` y 
 ```powershell
 npm run check   # TypeScript en modo estricto (sin emitir)
 npm run dev     # terminal 1: servidor local en el puerto 8787
-npm run e2e     # terminal 2: prueba de extremo a extremo (64 pruebas)
+npm run e2e     # terminal 2: prueba de extremo a extremo (70 pruebas)
 npm run backup  # exporta una copia de la D1 de producción a backups/backup.sql
 ```
 
-`test/e2e.mjs` es la especificación real del panel: cubre el bot, login y roles, agenda, CRUD completo, conflictos de horario, validaciones, ajustes, historial, informes (ingresos y CSV), CSP, bloqueo de login y rate-limit por sesión e IP.
+`test/e2e.mjs` es la especificación real del panel: cubre el bot, login y roles, agenda, CRUD completo, conflictos de horario, validaciones, ajustes, horarios y vacaciones por peluquero, historial, informes (ingresos y CSV), CSP, bloqueo de login y rate-limit por sesión e IP.
+
+## Integración continua
+
+`.github/workflows/ci.yml` ejecuta `npm run check` y el e2e completo en cada push a `master`, en pull requests y a mano (pestaña *Actions* → *CI* → *Run workflow*). No necesita secretos: usa valores de prueba locales.
+
+## Plantillas para rellenar los datos del salón
+
+En `datos-salon/` hay plantillas listas para rellenar (tipo de peluquería, nombre/dirección/teléfono, peluqueros con sus horarios y vacaciones, y servicios con duración y precio). Los datos se copian luego en *Ajustes* del panel.
 
 ## Copia de seguridad automática
 

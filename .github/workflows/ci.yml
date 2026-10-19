@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Comprobar tipos
+        run: npm run check
+      - name: Crear .dev.vars para las pruebas
+        run: |
+          printf '%s\n' \
+            'VERIFY_TOKEN=<VERIFY_TOKEN_DE_PRUEBA>' \
+            'APP_SECRET=topsecret' \
+            'ADMIN_PASSWORD=admin-pass-1' \
+            'STAFF_PASSWORD=staff-pass-1' \
+            'SESSION_SECRET=0123456789abcdef0123456789abcdef' \
+            > .dev.vars
+      - name: Crear la base de datos local
+        run: npx wrangler d1 execute citasalon --local --file=schema.sql
+      - name: Arrancar el Worker en segundo plano
+        run: |
+          nohup npx wrangler dev --port 8787 --test-scheduled > wrangler.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8787/health >/dev/null; then echo "Worker listo"; exit 0; fi
+            sleep 2
+          done
+          echo "El Worker no arrancó a tiempo"; cat wrangler.log; exit 1
+      - name: Pruebas de extremo a extremo
+        run: npm run e2e
+        env:
+          BASE: http://127.0.0.1:8787
+      - name: Mostrar el log del Worker si algo falla
+        if: failure()
+        run: cat wrangler.log

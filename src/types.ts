@@ -34,6 +34,10 @@ export interface Settings {
   stylists: string[];
   /** día de la semana (0 = lunes ... 6 = domingo) -> tramos ["10:00","14:00"] */
   hours: Record<number, [string, string][]>;
+  /** horario propio de cada peluquero; si falta un día, se usa `hours` */
+  stylistHours: Record<string, Record<number, [string, string][]>>;
+  /** vacaciones/festivos propios de cada peluquero (AAAA-MM-DD) */
+  stylistClosedDates: Record<string, string[]>;
   closedDates: string[];
   slotMinutes: number;
   maxDaysAhead: number;

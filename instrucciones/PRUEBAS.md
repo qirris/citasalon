@@ -11,7 +11,7 @@ npm run e2e     # limpia las tablas de la D1 local y ejecuta test/e2e.mjs (requi
 
 1. `npx wrangler d1 execute citasalon --local --file=schema.sql` (primera vez o si se cambió el esquema).
 2. `npm run dev` → servidor en `http://localhost:8787` (lee `.dev.vars`).
-3. `npm run e2e` → objetivo: **64/64 pruebas correctas, 0 fallidas**.
+3. `npm run e2e` → objetivo: **70/70 pruebas correctas, 0 fallidas**.
 
 Notas:
 - El e2e borra las tablas locales al empezar (no usa la BD de producción).
@@ -30,6 +30,11 @@ Notas:
 - Rate-limit: 429 tras superar 120 peticiones/minuto con una sesión; 429 en `/qr` tras superar el límite por IP (sin sesión).
 - Regresión (revisión visual): tras guardar Ajustes, el nombre no lleva comillas sobrantes ni en el panel ni en el cartel QR (guarda contra el bug de `config.ts`).
 - Informes: Recepción no accede a `/admin/informes`; el informe suma bien los ingresos del periodo y desglosa por servicio; `/admin/informes.csv` devuelve `text/csv` con las citas del periodo.
+- Horarios por peluquero: se guardan y se muestran en Ajustes; un peluquero fuera de su horario o de vacaciones no acepta la cita desde el panel (422); el bot ni siquiera ofrece la hora fuera del horario de los peluqueros y sí reserva dentro.
+
+## Integración continua
+
+`.github/workflows/ci.yml` reproduce el procedimiento local (Node 22 + Ubuntu): `npm ci`, `npm run check`, crea un `.dev.vars` de prueba, aplica `schema.sql` a la D1 local, arranca `wrangler dev` en segundo plano, espera a `/health` y ejecuta `npm run e2e`. Se lanza en cada push a `master`, en PRs y a mano (*Actions* → *CI* → *Run workflow*).
 
 ## Verificación en producción
 
@@ -48,4 +53,4 @@ Comprobar también `/qr` (200 + `<svg`) y `/admin` (200 + "Contraseña" + CSP). 
 
 ## Resultados verificados
 
-- 2026-10-19: check limpio y e2e 64/64 en local (incl. informes/CSV y las 2 guardas de regresión de la revisión visual); verificación en vivo de producción correcta; rate-limit verificado en producción (las 2 pruebas remotas pasan). El e2e completo NO se puede ejecutar contra producción: el worker remoto no tiene secretos de panel (decisión del usuario de no activar WhatsApp aún). Detalle en `memoria.md` sección 8.
+- 2026-10-19: check limpio y e2e 70/70 en local (incl. informes/CSV, horarios por peluquero y las 2 guardas de regresión de la revisión visual); verificación en vivo de producción correcta; rate-limit verificado en producción (las 2 pruebas remotas pasan). El e2e completo NO se puede ejecutar contra producción: el worker remoto no tiene secretos de panel (decisión del usuario de no activar WhatsApp aún). Detalle en `memoria.md` sección 8.
