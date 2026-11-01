@@ -3,12 +3,18 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "scripts": {
     "dev": "wrangler dev --test-scheduled",
     "deploy": "wrangler deploy",
     "check": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test test/bot.test.mjs test/consumer.test.mjs test/webhook.test.mjs test/notices.test.mjs",
+    "test:notices": "node --experimental-strip-types test/notices.test.mjs",
     "backup": "node -e \"require('fs').mkdirSync('backups',{recursive:true})\" && wrangler d1 export citasalon --remote --output backups/backup.sql",
-    "e2e": "wrangler d1 execute citasalon --local --command \"DELETE FROM appointments; DELETE FROM sessions; DELETE FROM settings; DELETE FROM audit_log; DELETE FROM login_attempts; DELETE FROM processed_messages; DELETE FROM rate_limits;\" && node test/e2e.mjs"
+    "e2e": "wrangler d1 execute citasalon --local --command \"DELETE FROM appointments; DELETE FROM sessions; DELETE FROM settings; DELETE FROM audit_log; DELETE FROM login_attempts; DELETE FROM processed_messages; DELETE FROM rate_limits;\" && node test/e2e.mjs",
+    "qr:recepcion": "node scripts/generate-qr-recepcion.mjs"
   },
   "dependencies": {
     "uqr": "^0.1.2"
