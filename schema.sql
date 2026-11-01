@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS appointments (
   stylist       TEXT NOT NULL,
   starts_at     TEXT NOT NULL,          -- 'AAAA-MM-DDTHH:MM' hora local del salón
   ends_at       TEXT NOT NULL,
-  status        TEXT NOT NULL DEFAULT 'confirmed',   -- confirmed | cancelled
+  status        TEXT NOT NULL DEFAULT 'confirmed',   -- confirmed | cancelled | done
   reminder_sent INTEGER NOT NULL DEFAULT 0,
   source        TEXT NOT NULL DEFAULT 'whatsapp',    -- whatsapp | admin | staff
   notes         TEXT NOT NULL DEFAULT '',

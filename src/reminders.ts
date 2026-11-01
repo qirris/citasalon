@@ -12,13 +12,14 @@ export async function runReminders(env: Env, now: Date = nowLocal(env.SALON_TZ))
     const start = parseDT(a.starts_at);
     const day = fmtDay(startOfDay(start), startOfDay(now));
     const hour = hhmm(start);
-    const ok = env.REMINDER_TEMPLATE
+    const result = env.REMINDER_TEMPLATE
       // Plantilla sugerida: "Hola {{1}}, te recordamos tu cita de {{2}} el {{3}} a las {{4}}. Si no puedes venir, responde CANCELAR."
       ? await sendTemplate(env, a.phone, env.REMINDER_TEMPLATE, env.REMINDER_TEMPLATE_LANG || "es", [a.name, a.service_name, day, hour])
       : await sendText(env, a.phone,
           `⏰ Hola ${a.name}, te recordamos tu cita de *${a.service_name}* ${day} a las ${hour} en ${s.salonName}.\n` +
           "Si no puedes venir, escribe *cancelar* para liberar el hueco.");
-    if (ok) { await db.markReminderSent(env.DB, a.id); sent++; }
+    if (result.ok && !result.simulated) { await db.markReminderSent(env.DB, a.id); sent++; }
+    else if (result.simulated) { console.log(`[recordatorio simulado] No se marca como enviado: cita ${a.id}`); }
     else console.warn(`No se pudo enviar el recordatorio de la cita ${a.id}`);
   }
   return sent;
