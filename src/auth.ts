@@ -17,11 +17,16 @@ export async function safeEqual(secret: string, a: string, b: string): Promise<b
 export type PanelRole = "admin" | "staff";
 
 const SESSION_MS = 12 * 60 * 60 * 1000;
-const secret = (env: { SESSION_SECRET?: string }) => env.SESSION_SECRET || "sin-secreto";
+
+function getSecret(env: { SESSION_SECRET?: string }): string {
+  const s = env.SESSION_SECRET;
+  if (!s) throw new Error("SESSION_SECRET no configurado");
+  return s;
+}
 
 export async function createSession(env: { SESSION_SECRET?: string }, role: PanelRole): Promise<string> {
   const exp = Date.now() + SESSION_MS;
-  const sig = await hmacHex(secret(env), `${role}.${exp}`);
+  const sig = await hmacHex(getSecret(env), `${role}.${exp}`);
   return `${role}.${exp}.${sig}`;
 }
 
@@ -33,8 +38,12 @@ export async function readSession(env: { SESSION_SECRET?: string }, req: Request
   const [role, expStr, sig] = parts;
   if (role !== "admin" && role !== "staff") return null;
   if (!/^\d+$/.test(expStr) || Date.now() > Number(expStr)) return null;
-  const expected = await hmacHex(secret(env), `${role}.${expStr}`);
-  return (await safeEqual(secret(env), sig, expected)) ? role : null;
+  try {
+    const expected = await hmacHex(getSecret(env), `${role}.${expStr}`);
+    return (await safeEqual(getSecret(env), sig, expected)) ? role : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function sessionCookie(env: { SESSION_SECRET?: string }, role: PanelRole, req: Request): Promise<string> {

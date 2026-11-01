@@ -1,12 +1,17 @@
 import type { BotMessage, Env } from "./types.ts";
+import { diag, diagError } from "./debug.ts";
 
 const clip = (t: string, n: number) => (t.length <= n ? t : t.slice(0, n - 1) + "…");
 
-async function post(env: Env, payload: object): Promise<boolean> {
-  if (!env.WHATSAPP_TOKEN || !env.WHATSAPP_PHONE_ID) {
-    console.log("[modo consola] ->", JSON.stringify(payload));   // sin credenciales: solo se registra
-    return true;
+export type SendResult = { ok: boolean; simulated: boolean; status?: number; error?: string; wamid?: string };
+
+async function post(env: Env, payload: object): Promise<SendResult> {
+  if (!env.WHATSAPP_TOKEN || !env.WHATSAPP_PHONE_ID || env.WHATSAPP_CONSOLE === "1") {
+    console.log("[modo consola] ->", JSON.stringify(payload));
+    return { ok: true, simulated: true };
   }
+  const maskedTo = String((payload as any).to).slice(0, 2) + "…" + String((payload as any).to).slice(-2);
+  diag(`send-post to=${maskedTo} type=${(payload as any).type}`);
   try {
     const r = await fetch(`https://graph.facebook.com/${env.GRAPH_VERSION || "v25.0"}/${env.WHATSAPP_PHONE_ID}/messages`, {
       method: "POST",
@@ -14,13 +19,16 @@ async function post(env: Env, payload: object): Promise<boolean> {
       body: JSON.stringify(payload),
     });
     if (!r.ok) {
-      console.error(`WhatsApp respondió ${r.status}: ${await r.text()}`);
-      return false;
+      const body = await r.text();
+      diagError(`send-post FAILED status=${r.status} to=${maskedTo} body=${body.slice(0, 200)}`);
+      return { ok: false, simulated: false, status: r.status, error: body.slice(0, 300) };
     }
-    return true;
+    diag(`send-post OK status=${r.status} to=${maskedTo}`);
+    const data = await r.json().catch(() => null) as { messages?: { id?: string }[] } | null;
+    return { ok: true, simulated: false, wamid: data?.messages?.[0]?.id };
   } catch (e) {
-    console.error("Error de red enviando a WhatsApp:", e);
-    return false;
+    diagError("send-post NETWORK-ERROR to=" + maskedTo, e);
+    return { ok: false, simulated: false };
   }
 }
 

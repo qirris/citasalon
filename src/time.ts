@@ -29,8 +29,12 @@ export const weekday = (d: Date): number => (d.getUTCDay() + 6) % 7;
 export const startOfDay = (d: Date): Date => parseDay(dayStr(d));
 export const hhmm = (d: Date): string => iso(d).slice(11, 16);
 
-export const isValidDay = (s: string): boolean =>
-  /^\d{4}-\d{2}-\d{2}$/.test(s) && dayStr(parseDay(s)) === s;
+export const isValidDay = (s: string): boolean => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const d = parseDay(s);
+  // Fechas imposibles ("2026-13-99") dan Invalid Date: dayStr() lanzaría al hacer toISOString().
+  return !Number.isNaN(d.getTime()) && dayStr(d) === s;
+};
 export const isValidTime = (s: string): boolean => /^([01]\d|2[0-3]):[0-5]\d$/.test(s);
 
 /** "10:00" en el día `day` */

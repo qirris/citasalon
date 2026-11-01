@@ -1,9 +1,9 @@
 import type { Env, Service, Settings } from "./types.ts";
 
 const DEFAULT_SERVICES: Service[] = [
-  { id: "corte_mujer", name: "Corte mujer", minutes: 45, price: "25 €" },
-  { id: "corte_hombre", name: "Corte hombre", minutes: 30, price: "15 €" },
-  { id: "tinte", name: "Tinte", minutes: 90, price: "35 €" },
+  { id: "corte_mujer", name: "Corte mujer", minutes: 45, price: "25 €", active: true },
+  { id: "corte_hombre", name: "Corte hombre", minutes: 30, price: "15 €", active: true },
+  { id: "tinte", name: "Tinte", minutes: 90, price: "35 €", active: true },
 ];
 
 const WEEK_HOURS: [string, string][] = [["10:00", "20:00"]];
@@ -30,7 +30,8 @@ export async function loadSettings(env: Env): Promise<Settings> {
     salonName: s("salonName", env.SALON_NAME),
     address: s("address", env.SALON_ADDRESS),
     phone: s("phone", env.SALON_PHONE),
-    services: j("services", DEFAULT_SERVICES),
+    // Los servicios guardados antes de existir `active` se consideran activos.
+    services: j<Service[]>("services", DEFAULT_SERVICES).map((x) => ({ ...x, active: x.active !== false })),
     stylists: j("stylists", ["Ana", "Luis"]),
     hours: j("hours", DEFAULT_HOURS),
     stylistHours: j("stylistHours", {}),
