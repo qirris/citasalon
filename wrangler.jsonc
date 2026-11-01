@@ -24,10 +24,9 @@
     // Plantilla aprobada en Meta. ID: <ID_PLANTILLA_ACTUALIZACION> (referencia documental;
     // sendTemplate envía el nombre, no el ID).
     "UPDATE_TEMPLATE_LANG": "es_ES",
-    // Confirmación de reserva creada desde un panel. PENDIENTE de crear y aprobar en Meta:
-    // mientras el nombre esté vacío, src/notices.ts no envía nada (la cita se guarda igual).
-    // Plantilla propuesta: aviso_cita_creada (es_ES), body con 4 parámetros:
-    // servicio, fecha, hora, peluquero.
+    // Confirmación de reserva creada desde un panel. Integrada el 2026-11-01.
+    // Plantilla aprobada en Meta: confirmacion_reserva_peluqueria (es_ES), ID: <ID_PLANTILLA_CONFIRMACION>.
+    // Body con 4 parámetros: servicio, fecha, hora, peluquero.
     "CREATE_TEMPLATE": "confirmacion_reserva_peluqueria",
     "CREATE_TEMPLATE_LANG": "es_ES"
   },

@@ -44,21 +44,20 @@ Write-Host "`n[3/4] Publicando el bot y los paneles..." -ForegroundColor Cyan
 Write-Host "      (si te pregunta por un subdominio workers.dev, elige uno: será parte de tu dirección web)"
 npx wrangler deploy
 if ($LASTEXITCODE -ne 0) {
-  Fail "La publicación ha fallado. Si el error habla de la base de datos, mira 'Si usas otra cuenta de Cloudflare' en el README."
+  Fail "La publicación ha fallado. Si el error habla de la base de datos, revisa 'Base de datos D1' en docs/PUESTA_EN_MARCHA.md (sección 3)."
 }
 
 Write-Host "`n[4/4] Guardando contraseñas y claves (cifradas en Cloudflare, no se escriben en ningún archivo)" -ForegroundColor Cyan
-Write-Host "      Pega el token de WhatsApp cuando te lo pida (no se verá en pantalla)."
+Write-Host "      El token de WhatsApp es opcional: si lo dejas vacío, el bot funcionará en modo consola."
 $secrets = @{}
-$t = Ask "Token de WhatsApp (empieza por EAA...)"
-if (-not $t) { Fail "El token de WhatsApp es obligatorio." }
-$secrets.WHATSAPP_TOKEN = $t.Trim()
+$t = Ask "Token de WhatsApp (empieza por EAA...; Enter = modo consola, sin envío real)"
+if ($t.Trim()) { $secrets.WHATSAPP_TOKEN = $t.Trim() }
 
-$v = Ask "Token de verificación del webhook [Enter = <VERIFY_TOKEN_DE_PRUEBA>]" $false
-$secrets.VERIFY_TOKEN = if ($v) { $v.Trim() } else { "<VERIFY_TOKEN_DE_PRUEBA>" }
+$v = Ask "Token de verificación del webhook (Enter = generar uno aleatorio)" $false
+$secrets.VERIFY_TOKEN = if ($v.Trim()) { $v.Trim() } else { NewPassword }
 
 $a = Ask "App secret de Meta (Ajustes de la app > Básico) [Enter = omitir, no recomendado]"
-if ($a) { $secrets.APP_SECRET = $a.Trim() }
+if ($a.Trim()) { $secrets.APP_SECRET = $a.Trim() }
 
 $admin = AskPassword "Contraseña del panel de ADMINISTRACIÓN"
 $staff = AskPassword "Contraseña del panel de RECEPCIÓN"
@@ -79,18 +78,27 @@ try {
   if (Test-Path $tmp) { Remove-Item $tmp -Force }
 }
 
+if (-not $secrets.ContainsKey("WHATSAPP_TOKEN")) {
+  Write-Host "`nSin WHATSAPP_TOKEN: el bot queda en modo consola (no envía mensajes reales)." -ForegroundColor Yellow
+}
+
 Write-Host "`nListo. ¿Qué dirección te ha dado Cloudflare? (la que acaba en .workers.dev, salió arriba)" -ForegroundColor Green
 $url = (Read-Host "Pégala aquí para que te prepare los enlaces (o Enter para saltar)").Trim().TrimEnd("/")
 if ($url) {
-  Write-Host "`nWebhook para Meta (URL de devolución de llamada):  $url/webhook"
-  Write-Host "Token de verificación:                              $($secrets.VERIFY_TOKEN)"
-  Write-Host "Panel de administración:                            $url/admin"
+  Write-Host "`nPanel de administración:                            $url/admin"
   Write-Host "Panel de recepción:                                 $url/recepcion"
   Write-Host "Cartel con QR para clientes:                        $url/qr"
+  if ($secrets.ContainsKey("WHATSAPP_TOKEN")) {
+    Write-Host "Webhook para Meta (URL de devolución de llamada):  $url/webhook"
+    Write-Host "Token de verificación:                              $($secrets.VERIFY_TOKEN)"
+  } else {
+    Write-Host "Webhook para Meta:                                  $url/webhook (solo si activas WhatsApp)"
+    Write-Host "Token de verificación:                              $($secrets.VERIFY_TOKEN) (solo si activas WhatsApp)"
+  }
 }
 if ($admin.generated -or $staff.generated) {
   Write-Host "`nAPUNTA ESTAS CONTRASEÑAS (no se volverán a mostrar):" -ForegroundColor Yellow
   if ($admin.generated) { Write-Host "  Administración: $($admin.value)" }
   if ($staff.generated) { Write-Host "  Recepción:      $($staff.value)" }
 }
-Write-Host "`nSiguiente paso: pon esa URL del webhook en Meta (README, sección 3)." -ForegroundColor Green
+Write-Host "`nSiguiente paso: pon esa URL del webhook en Meta (docs/PUESTA_EN_MARCHA.md, sección 6)." -ForegroundColor Green

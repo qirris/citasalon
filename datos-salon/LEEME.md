@@ -13,3 +13,6 @@ Orden recomendado:
 
 > El panel usa un formato muy concreto. En cada archivo se explica el formato
 > exacto y hay ejemplos listos para copiar y pegar.
+>
+> La guía completa de datos, decisiones y verificación está en
+> `../docs/CONFIGURACION_PELUQUERIA_REAL.md`.

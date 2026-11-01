@@ -1,6 +1,6 @@
 # Copia este archivo como ".dev.vars" para probar en tu ordenador (npm run dev).
 # Son secretos de PRUEBA. Los de verdad se guardan en Cloudflare con setup.ps1.
-VERIFY_TOKEN=<VERIFY_TOKEN_DE_PRUEBA>
+VERIFY_TOKEN=test-verify-token
 APP_SECRET=topsecret
 ADMIN_PASSWORD=admin-pass-1
 STAFF_PASSWORD=staff-pass-1

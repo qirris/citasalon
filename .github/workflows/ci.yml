@@ -33,6 +33,6 @@ jobs:
       - name: Comprobar tipos
         run: npm run check
       - name: Ejecutar pruebas unitarias
-        run: npm test
+        run: npm run test:all
       - name: Mostrar versión de Node
         run: node --version
