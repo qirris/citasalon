@@ -124,7 +124,7 @@ function makeEnv(db, overrides = {}) {
     CANCEL_TEMPLATE_LANG: "es_ES",
     UPDATE_TEMPLATE: "aviso_cita_actualizada",
     UPDATE_TEMPLATE_LANG: "es_ES",
-    CREATE_TEMPLATE: "aviso_cita_creada",
+    CREATE_TEMPLATE: "confirmacion_reserva_peluqueria",
     CREATE_TEMPLATE_LANG: "es_ES",
     SESSION_SECRET: "secreto-de-prueba",
     ...overrides,
@@ -392,7 +392,7 @@ test("creación: plantilla, idioma y los cuatro parámetros en orden", async (t)
   assert.equal(payloads.length, 1);
   const payload = payloads[0];
   assert.equal(payload.to, PHONE);
-  assert.equal(payload.template.name, "aviso_cita_creada");
+  assert.equal(payload.template.name, "confirmacion_reserva_peluqueria");
   assert.equal(payload.template.language.code, "es_ES");
   const params = payload.template.components[0].parameters.map((p) => p.text);
   assert.deepEqual(params, creationParams(appt));
@@ -418,7 +418,7 @@ test("creación desde recepción: guarda y envía una sola confirmación", async
   assert.equal(audit.at(-1).action, "crear");
   assert.equal(payloads.length, 1);
   assert.equal(payloads[0].to, PHONE);
-  assert.equal(payloads[0].template.name, "aviso_cita_creada");
+  assert.equal(payloads[0].template.name, "confirmacion_reserva_peluqueria");
   assert.equal(payloads[0].template.components[0].parameters.length, 4);
 });
 
@@ -436,7 +436,7 @@ test("creación desde administración: guarda y envía la confirmación", async 
   assert.equal(res.status, 303);
   assert.equal(appts.length, 1);
   assert.equal(payloads.length, 1);
-  assert.equal(payloads[0].template.name, "aviso_cita_creada");
+  assert.equal(payloads[0].template.name, "confirmacion_reserva_peluqueria");
 });
 
 test("creación sin teléfono: guarda la cita pero no envía nada", async (t) => {
@@ -506,7 +506,7 @@ test("Meta rechaza la confirmación: la cita permanece guardada", async (t) => {
   assert.equal(appts[0].status, "confirmed");
   assert.equal(audit.at(-1).action, "crear");
   assert.equal(calls.length, 1);
-  assert.equal(calls[0].body.template.name, "aviso_cita_creada");
+  assert.equal(calls[0].body.template.name, "confirmacion_reserva_peluqueria");
   assert.ok(lines.some((l) => l.includes("Meta rechazó")));
   const all = lines.join("\n");
   assert.ok(!all.includes("token-secreto"));

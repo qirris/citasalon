@@ -28,7 +28,7 @@
     // mientras el nombre esté vacío, src/notices.ts no envía nada (la cita se guarda igual).
     // Plantilla propuesta: aviso_cita_creada (es_ES), body con 4 parámetros:
     // servicio, fecha, hora, peluquero.
-    "CREATE_TEMPLATE": "",
+    "CREATE_TEMPLATE": "confirmacion_reserva_peluqueria",
     "CREATE_TEMPLATE_LANG": "es_ES"
   },
 
