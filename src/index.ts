@@ -1,22 +1,32 @@
 import * as bot from "./bot.ts";
 import * as db from "./db.ts";
+import * as whatsapp from "./whatsapp.ts";
+import { applyMetaStatuses, deliverOutboxForWamid, deliverPendingOutbox, drainInbox, processQueueMessage } from "./consumer.ts";
 import { hmacHex, safeEqual } from "./auth.ts";
 import { loadSettings } from "./config.ts";
 import { handlePanel } from "./panels.ts";
 import { normalizePhone } from "./phone.ts";
 import { runReminders } from "./reminders.ts";
 import { nowLocal } from "./time.ts";
-import type { Env } from "./types.ts";
-import { send, sendText } from "./whatsapp.ts";
+import { diag, diagError, setDebugContext } from "./debug.ts";
+import type { Env, InboxJob } from "./types.ts";
 
 // ------------------------------------------------------------------ webhook de WhatsApp
 interface WaMessage {
-  id?: string; from?: string; type?: string;
+  id?: string; from?: string; type?: string; timestamp?: number;
   text?: { body: string };
   interactive?: { button_reply?: { id: string; title: string }; list_reply?: { id: string; title: string } };
 }
 
-function* extractMessages(payload: any): Generator<{ msg: WaMessage; profile: string | null }> {
+/** Enmascara un número de teléfono para no guardarlo completo en logs. */
+function maskPhone(p: string): string {
+  if (!p) return "?";
+  const d = p.replace(/\D/g, "");
+  if (d.length < 4) return "****";
+  return `${d.slice(0, 2)}…${d.slice(-2)}`;
+}
+
+export function* extractMessages(payload: any): Generator<{ msg: WaMessage; profile: string | null }> {
   for (const entry of payload?.entry ?? []) {
     for (const change of entry?.changes ?? []) {
       const value = change?.value ?? {};
@@ -26,26 +36,80 @@ function* extractMessages(payload: any): Generator<{ msg: WaMessage; profile: st
   }
 }
 
-async function processMessage(env: Env, msg: WaMessage, profile: string | null): Promise<void> {
-  const phone = normalizePhone(msg.from ?? "") ?? msg.from ?? "";
-  try {
-    const now = nowLocal(env.SALON_TZ);
-    if (!msg.id || !phone || !(await db.markMessageSeen(env.DB, msg.id, now))) return;
-    let replies;
-    if (msg.type === "text" && msg.text) {
-      replies = await bot.handleMessage(env, phone, msg.text.body, profile, now);
-    } else if (msg.type === "interactive") {
-      const r = msg.interactive?.button_reply ?? msg.interactive?.list_reply;
-      replies = r ? await bot.handleMessage(env, phone, r.title, profile, now, r.id)
-                  : ["Solo entiendo texto y botones 🙂 Escribe *hola* para ver el menú."];
-    } else {
-      replies = ["Solo entiendo texto y botones 🙂 Escribe *hola* para ver el menú."];
+/** Acuses de entrega/lectura de Meta (no son mensajes del cliente). */
+export function* extractStatuses(payload: any): Generator<{ id: string; status: string }> {
+  for (const entry of payload?.entry ?? []) {
+    for (const change of entry?.changes ?? []) {
+      for (const st of change?.value?.statuses ?? []) {
+        if (st?.id && st?.status) yield { id: String(st.id), status: String(st.status) };
+      }
     }
-    for (const reply of replies) await send(env, phone, reply);
+  }
+}
+
+export interface BotService {
+  handleMessage: typeof bot.handleMessage;
+}
+
+export interface WhatsAppService {
+  send: typeof whatsapp.send;
+}
+
+/**
+ * Webhook: guarda el mensaje en el Inbox (deduplicado por WAMID), lo publica en la cola
+ * local si existe y drena en el acto para que la respuesta no espere al consumidor.
+ * La cola y el cron son la red de seguridad: el Inbox es la fuente de verdad.
+ */
+export async function processMessage(
+  env: Env,
+  msg: WaMessage,
+  profile: string | null,
+  services: { bot: BotService, whatsapp: WhatsAppService } = { bot, whatsapp }
+): Promise<void> {
+  const phone = normalizePhone(msg.from ?? "") ?? msg.from ?? "";
+  const mPhone = maskPhone(phone);
+  const now = nowLocal(env.SALON_TZ);
+  if (!msg.id || !phone) {
+    diag(`skip wamid=${msg.id} reason=invalid`);
+    return;
+  }
+
+  try {
+    diag(`incoming wamid=${msg.id} type=${msg.type} phone=${mPhone} profile=${profile ?? "none"}`);
+    const saved = await db.saveInboxMessage(env.DB, msg, profile, phone, now);
+    if (!saved) {
+      diag(`duplicate wamid=${msg.id} phone=${mPhone} (ignorado)`);
+      return;
+    }
+    diag(`inbox saved wamid=${msg.id} phone=${mPhone} seq=${saved.sequence}`);
+
+    if (env.WHATSAPP_QUEUE) {
+      try {
+        await env.WHATSAPP_QUEUE.send({ id: msg.id });
+        diag(`queued wamid=${msg.id}`);
+      } catch (e) {
+        // Sin cola el mensaje sigue en el Inbox: el cron lo recuperará.
+        diagError(`queue send failed wamid=${msg.id}:`, e);
+      }
+    }
+
+    if (env.INLINE_DRAIN === "0") {
+      diag(`inline drain disabled wamid=${msg.id} (modo cola)`);
+    } else {
+      const processed = await drainInbox(env, services);
+      diag(`drain wamid=${msg.id} processed=${processed}`);
+    }
   } catch (e) {
-    console.error(`Error procesando mensaje de ${phone}:`, e);
+    diagError(`error processing message from ${mPhone} wamid=${msg.id}:`, e);
+    try { await db.markInboxFailed(env.DB, msg.id, now, String(e)); } catch { /* la fila puede no existir */ }
     const s = await loadSettings(env).catch(() => null);
-    await sendText(env, phone, `Ha habido un problema técnico. Inténtalo de nuevo en un momento${s ? ` o llámanos al ${s.phone}` : ""}.`);
+    const text = `Ha habido un problema técnico. Inténtalo de nuevo en un momento${s ? ` o llámanos al ${s.phone}` : ""}.`;
+    try {
+      await db.createOutboxMessage(env.DB, `error:${msg.id}`, 0, phone, text, now);
+      await deliverOutboxForWamid(env, `error:${msg.id}`, services.whatsapp, now);
+    } catch (sendError) {
+      diagError(`no se pudo avisar del error wamid=${msg.id}:`, sendError);
+    }
   }
 }
 
@@ -69,16 +133,30 @@ async function webhook(req: Request, env: Env, ctx: ExecutionContext): Promise<R
   }
   let payload: unknown;
   try { payload = JSON.parse(raw); } catch { return Response.json({ status: "ignored" }); }
-  for (const { msg, profile } of extractMessages(payload)) ctx.waitUntil(processMessage(env, msg, profile));
+  const msgs = Array.from(extractMessages(payload));
+  const statuses = Array.from(extractStatuses(payload));
+  diag(`webhook POST received ${msgs.length} message(s), ${statuses.length} status(es)`);
+  if (statuses.length) {
+    ctx.waitUntil(applyMetaStatuses(env, statuses).catch((e) => diagError("status update failed:", e)));
+  }
+  for (const { msg, profile } of msgs) ctx.waitUntil(processMessage(env, msg, profile));
   return Response.json({ status: "ok" });
 }
 
 // ------------------------------------------------------------------ entrada del Worker
 export default {
   async fetch(req: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
+    setDebugContext(env);
     const url = new URL(req.url);
     try {
-      if (url.pathname === "/health") return Response.json({ ok: true });
+      if (url.pathname === "/health") {
+        try {
+          await env.DB.prepare("SELECT 1").first();
+          return Response.json({ ok: true });
+        } catch (e) {
+          return Response.json({ ok: false, error: "database unreachable" }, { status: 503 });
+        }
+      }
       if (url.pathname === "/webhook") return await webhook(req, env, _ctx);
       const panel = await handlePanel(req, env);
       if (panel) return panel;
@@ -91,11 +169,33 @@ export default {
 
   // Cada 10 minutos (ver "triggers" en wrangler.jsonc)
   async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+    setDebugContext(env);
     ctx.waitUntil((async () => {
       try {
-        await runReminders(env);
-        await db.cleanup(env.DB, nowLocal(env.SALON_TZ));
+        const now = nowLocal(env.SALON_TZ);
+        await runReminders(env, now);
+        // Recuperación de Fase 2: mensajes atascados y entregas pendientes/inciertas.
+        await drainInbox(env, { bot, whatsapp });
+        await deliverPendingOutbox(env, whatsapp);
+        await db.cleanup(env.DB, now);
       } catch (e) { console.error("Fallo en la tarea programada:", e); }
     })());
+  },
+
+  // Consumidor de la cola local de WhatsApp
+  async queue(batch: MessageBatch, env: Env, _ctx: ExecutionContext): Promise<void> {
+    setDebugContext(env);
+    for (const message of batch.messages) {
+      const job = message.body as InboxJob;
+      try {
+        const result = await processQueueMessage(env, job, { bot, whatsapp });
+        if (result.processed) message.ack();
+        else if (result.deferred) message.retry({ delaySeconds: 2 });
+        else message.retry({ delaySeconds: 30 });
+      } catch (e) {
+        diagError(`queue message failed wamid=${job?.id}:`, e);
+        message.retry({ delaySeconds: 30 });
+      }
+    }
   },
 } satisfies ExportedHandler<Env>;

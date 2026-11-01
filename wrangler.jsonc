@@ -6,6 +6,7 @@
   // Datos no secretos. Los secretos (token de WhatsApp, contraseñas...) se guardan aparte
   // con "wrangler secret" y NUNCA se escriben aquí. Ver README.
   "vars": {
+    "DEBUG": "false",
     "SALON_NAME": "Peluqueria Ejemplo",
     "SALON_ADDRESS": "Calle Ejemplo 1",
     "SALON_PHONE": "600 000 000",
@@ -14,7 +15,21 @@
     "WHATSAPP_NUMBER": "<NUMERO_DE_PRUEBA>",
     "GRAPH_VERSION": "v25.0",
     "REMINDER_TEMPLATE": "",
-    "REMINDER_TEMPLATE_LANG": "es"
+    "REMINDER_TEMPLATE_LANG": "es",
+    "CANCEL_TEMPLATE": "aviso_cita_cancelada",
+    // Plantilla aprobada en Meta. ID: <ID_PLANTILLA_CANCELACION> (referencia documental;
+    // sendTemplate envía el nombre, no el ID).
+    "CANCEL_TEMPLATE_LANG": "es_ES",
+    "UPDATE_TEMPLATE": "aviso_cita_actualizada",
+    // Plantilla aprobada en Meta. ID: <ID_PLANTILLA_ACTUALIZACION> (referencia documental;
+    // sendTemplate envía el nombre, no el ID).
+    "UPDATE_TEMPLATE_LANG": "es_ES",
+    // Confirmación de reserva creada desde un panel. PENDIENTE de crear y aprobar en Meta:
+    // mientras el nombre esté vacío, src/notices.ts no envía nada (la cita se guarda igual).
+    // Plantilla propuesta: aviso_cita_creada (es_ES), body con 4 parámetros:
+    // servicio, fecha, hora, peluquero.
+    "CREATE_TEMPLATE": "",
+    "CREATE_TEMPLATE_LANG": "es_ES"
   },
 
   "d1_databases": [
@@ -25,6 +40,24 @@
     }
   ],
 
-  // Cada 10 minutos: envía recordatorios y limpia datos antiguos
+  // Cola de WhatsApp (Fase 2). Wrangler la simula en local sin crear nada en Cloudflare.
+  // Para desplegar en remoto haría falta crearla antes:  wrangler queues create whatsapp-inbox
+  // (no se ha creado ningún recurso remoto). El Inbox de D1 es la fuente de verdad: si la cola
+  // falla o no existe, el webhook drena en el acto y el cron recupera lo que quede.
+  "queues": {
+    "producers": [
+      { "binding": "WHATSAPP_QUEUE", "queue": "whatsapp-inbox" }
+    ],
+    "consumers": [
+      {
+        "queue": "whatsapp-inbox",
+        "max_batch_size": 10,
+        "max_batch_timeout": 5,
+        "max_retries": 5
+      }
+    ]
+  },
+
+  // Cada 10 minutos: recordatorios, recuperación de Inbox/Outbox y limpieza
   "triggers": { "crons": ["*/10 * * * *"] }
 }
