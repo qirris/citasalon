@@ -17,7 +17,7 @@
 
 ## Paneles HTML
 
-- Puro HTML + CSS inline en `<style>`; prohibido `<script>` (lo verifica el e2e).
+- Puro HTML + CSS inline en `<style>`. **Excepción**: solo dos scripts inline estáticos, en sus propias páginas y con su propia CSP: el selector de huecos del formulario de cita (`CSP_FORM`, con `connect-src 'self'` para `/slots`) y el refresco automático de la agenda (`CSP_AGENDA`, con `connect-src 'self'` para `/agenda-json`). El resto de páginas no permite JS (lo verifica el e2e). Si se añade otra página con JS, darle su propia CSP con el `connect-src` que necesite y escapar siempre los datos que vengan de clientes.
 - Escapear SIEMPRE contenido dinámico con `esc()` (nombres, notas, teléfonos, mensajes de error…).
 - CSP en todas las respuestas HTML: `default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; form-action 'self'; frame-ancestors 'none'; base-uri 'none'`.
 - Tiempos mostrados con rayita en dash "–" (U+2013): `17:00–18:30` (lo verifica el e2e).

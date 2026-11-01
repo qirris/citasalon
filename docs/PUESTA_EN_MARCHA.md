@@ -4,6 +4,10 @@ Guía reproducible para dejar el sistema funcionando para una peluquería client
 Sigue los pasos **en orden**. Al final tendrás el bot, los paneles y el QR
 operativos, con sus datos y contraseñas.
 
+> Este documento es la **secuencia técnica de comandos**. La recopilación de
+> datos, las decisiones del propietario y la checklist de personalización están
+> en `CONFIGURACION_PELUQUERIA_REAL.md` (misma carpeta `docs/`).
+
 > Regla de oro: **los secretos (contraseñas, tokens) nunca se escriben en un
 > archivo del repositorio**. Se meterán con `wrangler secret put` o `secret bulk`,
 > que los guarda cifrados en Cloudflare.
@@ -36,9 +40,11 @@ npx wrangler login
 ```
 
 **Vía rápida**: doble clic en `instalar.bat` (o `setup.ps1`). Hace los pasos 1,
-5 y 6 de golpe de forma guiada y te genera las contraseñas. Si usas esta vía,
+4 y 5 de forma guiada, genera las contraseñas y te prepara la URL/token para el
+paso 6. Si usas esta vía,
 puedes saltarte los pasos manuales equivalentes, pero **sigue necesitando** los
-datos del salón (paso 2) y el webhook en Meta (paso 6).
+datos del salón (paso 2) y, si vas a activar WhatsApp, el webhook en Meta (paso 6).
+El token de WhatsApp es opcional: si lo dejas vacío, el bot queda en modo consola.
 
 ---
 
@@ -97,7 +103,7 @@ Luego aplica el esquema:
 npx wrangler d1 execute citasalon --remote --file=schema.sql
 ```
 
-> El `schema.sql` es idempotente: se puede ejecutar varias veces sin romper nada.
+> El `schema.sql` es idempotente: se puede ejecutar varias veces sin romper nada. **No hay migraciones automáticas**: al crear una D1 nueva hay que aplicarlo a mano (local y remoto) antes de usar el Worker.
 
 ---
 
@@ -118,7 +124,8 @@ npx wrangler secret put VERIFY_TOKEN       # el token de verificación del webho
 - `VERIFY_TOKEN`: lo eliges tú; el mismo valor irá en Meta (paso 6).
 
 Opcional pero atajo: `setup.ps1` genera contraseñas y sube todos los secretos de
-una vez con `wrangler secret bulk`.
+una vez con `wrangler secret bulk`. Si no vas a activar WhatsApp todavía, deja
+vacío el token de WhatsApp: el script no lo exige y el bot queda en modo consola.
 
 ---
 
@@ -174,9 +181,11 @@ Prueba de punta a punta **en local** (no toca producción):
 
 ```powershell
 npx wrangler d1 execute citasalon --local --file=schema.sql
-npm run dev            # terminal 1
-npm run e2e            # terminal 2  -> debe dar 70/70
+npm run dev            # terminal 1 (http://localhost:8787)
+npm run e2e            # terminal 2 -> último resultado: 189/189, 0 fallidas, exit 0 (2026-10-30)
 ```
+
+> `npm run e2e` **borra las tablas de la D1 local** y necesita autorización. No se ejecuta contra producción. Si no se puede ejecutar, como mínimo `npm run check` y `node --check test/e2e.mjs`.
 
 Prueba real: escribe al WhatsApp del salón, reserva una cita y comprueba que
 aparece en `/admin`. Si activaste WhatsApp, mira también que llegue el mensaje.

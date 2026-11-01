@@ -8,13 +8,10 @@ Antes de tocar nada:
 
 1. Leer `memoria.md` (raíz) — estado real, decisiones, pendientes.
 2. Leer este archivo.
-3. Consultar los documentos de `instrucciones/` relacionados con la tarea:
-   - `ARQUITECTURA.md` — estructura y flujo de datos.
-   - `NORMAS_DE_CODIGO.md` — estilo y convenciones.
-   - `SEGURIDAD.md` — sesiones, secretos, CSP, validaciones.
-   - `PRUEBAS.md` — cómo verificar cambios.
-   - `DECISIONES.md` — por qué el código es así.
-   - `TAREAS_PENDIENTES.md` — qué queda por hacer.
+3. Consultar los documentos relacionados con la tarea:
+   - **Reglas** (`instrucciones/`): `ARQUITECTURA.md`, `NORMAS_DE_CODIGO.md`, `SEGURIDAD.md`, `PRUEBAS.md`, `DECISIONES.md`, `TAREAS_PENDIENTES.md`.
+   - **Guías** (`docs/`): `INDICE_DOCUMENTACION.md`, `PUESTA_EN_MARCHA.md`, `CONFIGURACION_PELUQUERIA_REAL.md`, `AUDITORIA_TEXTOS_FIJOS.md`, `RUTAS_Y_API.md`, `MODELO_DE_DATOS.md`, `OPERACION_Y_DESPLIEGUE.md`.
+   - **Histórico** (`archivos_historicos/`): solo para contexto; **no es fuente de verdad** y puede citar rutas antiguas.
 4. Contrastar la memoria con el código real (si difieren, manda el código y actualizar la memoria).
 5. Continuar desde el último estado conocido; no rehacer trabajo terminado.
 
@@ -33,8 +30,9 @@ Antes de tocar nada:
 - No borrar decisiones ni documentación previa sin dejar constancia del motivo.
 - No romper el bot de WhatsApp existente: los cambios deben ser compatibles.
 - `test/e2e.mjs` es la especificación del panel: si se toca el panel, se ejecuta el e2e completo.
-- El panel NO lleva JavaScript en el navegador (formularios HTML + redirecciones).
+- El panel es HTML server-side + formularios + redirecciones 303. Solo dos scripts inline estáticos, en sus propias páginas y con su propia CSP: el selector de huecos del formulario de cita (`CSP_FORM`, con `connect-src 'self'` para `/slots`) y el refresco automático de la agenda (`CSP_AGENDA`, con `connect-src 'self'` para `/agenda-json`). El resto de páginas no permite JS. `test/e2e.mjs` es la especificación.
 - No ejecutar operaciones destructivas (borrar BD, ficheros, secretos) sin autorización explícita.
+- Arquitectura actual: una peluquería = un Worker + una D1 + secretos propios. No hay multi-tenant; no compartir una D1 entre salones.
 - WhatsApp en producción sigue desactivado hasta que el usuario lo pida (ver pendientes).
 
 ## Convención de archivos de memoria

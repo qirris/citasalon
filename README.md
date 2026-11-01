@@ -1,11 +1,11 @@
 # Bot de citas por WhatsApp — citasalon
 
-Bot que permite a los clientes reservar, consultar y cancelar citas desde WhatsApp. Corre en Cloudflare Workers sin servidor propio.
+Bot que permite a los clientes reservar, consultar, reprogramar y cancelar citas desde WhatsApp. Corre en Cloudflare Workers sin servidor propio, con base de datos D1 y paneles web de administración y recepción.
 
 ```
 Cliente ──WhatsApp──► Meta ──webhook──► Cloudflare Worker ──► D1 (citas)
                                             │
-                                            └─ cron cada 10 min: recordatorios 24 h antes
+                                            └─ cron cada 10 min: recordatorios 24 h + limpieza
 ```
 
 ---
@@ -13,42 +13,46 @@ Cliente ──WhatsApp──► Meta ──webhook──► Cloudflare Worker �
 ## Qué hace cada archivo
 
 ### `src/index.ts`
-Punto de entrada del Worker. Gestiona dos cosas:
+Punto de entrada del Worker. Gestiona:
 - **`/webhook`** — recibe los mensajes de WhatsApp que envía Meta, los procesa y responde.
+- **Rutas públicas** — `/health`, `/manifest.json`, iconos PWA, `/qr-recepcion` y delegación a los paneles.
 - **Cron cada 10 min** — lanza los recordatorios y limpia datos antiguos de la base de datos.
 
 ### `src/bot.ts`
-Lógica principal del bot. Interpreta lo que escribe el cliente (texto libre o botones) y decide qué responder. Maneja el flujo completo: menú de bienvenida, selección de servicio, peluquero, fecha y hora, confirmación, consulta de citas y cancelación.
+Lógica principal del bot. Interpreta lo que escribe el cliente (texto libre o botones) y decide qué responder. Flujo de reserva: menú, servicio, **elección de peluquero**, fecha, hora, nombre y confirmación. También gestiona consulta, cancelación y reprogramación de citas propias.
 
 ### `src/db.ts`
-Todas las operaciones con la base de datos D1 de Cloudflare: crear citas, buscarlas, actualizarlas, cancelarlas, marcar mensajes como vistos y limpiar registros antiguos.
+Todas las operaciones con la base de datos D1: crear, buscar, actualizar, cancelar y borrar citas; sesiones; idempotencia de mensajes; auditoría; rate-limit y limpieza.
 
 ### `src/reminders.ts`
-Busca las citas de las próximas 24 horas y envía un recordatorio por WhatsApp al cliente. Solo recuerda citas reservadas con más de 24 horas de antelación y que tienen teléfono.
+Busca las citas de las próximas 24 horas y envía un recordatorio por WhatsApp. Solo recuerda citas reservadas con más de 24 horas de antelación y que tienen teléfono.
 
 ### `src/whatsapp.ts`
-Funciones para enviar mensajes a través de la API de WhatsApp (Meta Graph API): texto libre, mensajes con botones, listas y plantillas.
+Funciones para enviar mensajes a través de la API de WhatsApp (Meta Graph API): texto libre, mensajes con botones, listas y plantillas. Sin token funciona en **modo consola**.
 
 ### `src/availability.ts`
-Calcula los huecos libres de un día teniendo en cuenta las citas ya existentes, el horario de cada peluquero (con su horario propio si lo tiene, y sus vacaciones) y el horario general del salón.
+Calcula los huecos libres de un día teniendo en cuenta las citas existentes, el horario general del salón, el horario propio de cada peluquero, sus ausencias y los días cerrados.
 
 ### `src/config.ts`
-Carga y guarda la configuración del salón desde la base de datos: nombre, teléfono, servicios, peluqueros, horario general, horario propio y vacaciones de cada peluquero, y festivos.
+Carga y guarda la configuración del salón desde la tabla `settings`: nombre, dirección, teléfono, servicios, peluqueros, horarios, ausencias y reglas de reserva.
 
 ### `src/time.ts`
-Utilidades de fechas y horas: convertir zonas horarias, formatear horas, sumar minutos, validar fechas, etc.
+Utilidades de fechas y horas «de pared» (los campos UTC representan la hora local del salón): formatear, sumar minutos, validar fechas, calcular el día de la semana, etc.
 
 ### `src/types.ts`
-Tipos TypeScript compartidos por todos los módulos: `Appt`, `Service`, `Settings`, `Env`, `Role`, etc.
+Tipos TypeScript compartidos: `Appt`, `Service`, `Settings`, `Env`, `Role`, etc.
 
 ### `src/panels.ts`
-Todas las rutas de los paneles web (`/admin`, `/recepcion`, `/qr`): login, agenda, CRUD de citas, buscador, ajustes, historial de auditoría e informes (ingresos por periodo + export CSV). HTML server-side sin JavaScript en el navegador.
+Todas las rutas de los paneles web (`/admin`, `/recepcion`, `/qr`): login, agenda, CRUD de citas, buscador, servicios, peluqueros, horarios, ausencias, ajustes, historial de auditoría e informes (ingresos por periodo + export CSV). HTML generado en servidor.
 
 ### `src/auth.ts`
-Autenticación de los paneles: cookies de sesión firmadas con HMAC-SHA256, comparación en tiempo constante de contraseñas y tokens.
+Autenticación de los paneles: cookies de sesión firmadas con HMAC-SHA256, comparación en tiempo constante de contraseñas y tokens, y comprobación de `Origin`.
 
 ### `src/phone.ts`
 Normalización de teléfonos españoles a formato `+34…` (usada en el panel y en el webhook de WhatsApp).
+
+### `src/pwa.ts`
+Manifest PWA, iconos y página del cartel QR de recepción.
 
 ---
 
@@ -58,11 +62,18 @@ Además del bot, el Worker sirve tres rutas web:
 
 | Ruta | Rol | Qué hace |
 |---|---|---|
-| `/admin` | admin | Agenda diaria con estadísticas, crear/editar/cancelar/restaurar/borrar citas, buscador, ajustes completos del salón (incl. horarios por peluquero), historial de auditoría e informes con ingresos y export CSV |
-| `/recepcion` | staff o admin | Agenda, crear/editar/cancelar citas. No puede borrar, restaurar, ver ajustes ni historial |
-| `/qr` | público | Cartel con código QR hacia wa.me con los datos del salón |
+| `/admin` | admin | Agenda diaria con estadísticas y filtro por peluquero, crear/editar/cancelar/restaurar/borrar citas, buscador, servicios, peluqueros (horarios y ausencias), ajustes completos, historial de auditoría e informes con ingresos y export CSV |
+| `/recepcion` | staff o admin | Agenda, crear/editar/cancelar citas, servicios y personal. No puede borrar, restaurar, ver ajustes ni historial |
+| `/qr` | público | Cartel con código QR hacia `wa.me` con los datos del salón |
 
-Los paneles son formularios HTML + redirecciones 303, sin JavaScript en el navegador (más seguros y sin dependencias). Seguridad: cookies HttpOnly/SameSite=Strict, bloqueo de login tras 5 fallos, rate-limit por sesión e IP (120/min y 60/min, ventana de 60 s), CSRF por comprobación de Origin, CSP restrictiva y SQL parametrizado.
+Los paneles son formularios HTML + redirecciones 303. **No son una SPA**: la regla es HTML server-side, con **dos únicas excepciones de JavaScript inline estático**, cada una en su propia página y con su propia CSP:
+
+- **Selector de huecos** del formulario de cita (`CSP_FORM`): consulta `/slots` para mostrar los horarios libres.
+- **Refresco automático de la agenda** (`CSP_AGENDA`): consulta `/agenda-json` cada 1/2/5/10 minutos.
+
+El resto de páginas no permite JavaScript. Cualquier página nueva con JS debe tener su propia CSP con el `connect-src` necesario y escapar siempre los datos que vengan de clientes.
+
+Seguridad: cookies `HttpOnly`/`SameSite=Strict`, bloqueo de login tras 5 fallos, rate-limit por sesión e IP (120/min y 60/min, ventana de 60 s), CSRF por comprobación de `Origin`, CSP restrictiva y SQL parametrizado.
 
 Las contraseñas de los paneles se configuran como secretos (`ADMIN_PASSWORD` y `STAFF_PASSWORD`) con `npx wrangler secret put`.
 
@@ -73,21 +84,43 @@ Las contraseñas de los paneles se configuran como secretos (`ADMIN_PASSWORD` y 
 ```powershell
 npm run check   # TypeScript en modo estricto (sin emitir)
 npm run dev     # terminal 1: servidor local en el puerto 8787
-npm run e2e     # terminal 2: prueba de extremo a extremo (70 pruebas)
+npm run e2e     # terminal 2: prueba de extremo a extremo
 npm run backup  # exporta una copia de la D1 de producción a backups/backup.sql
 ```
 
-`test/e2e.mjs` es la especificación real del panel: cubre el bot, login y roles, agenda, CRUD completo, conflictos de horario, validaciones, ajustes, horarios y vacaciones por peluquero, historial, informes (ingresos y CSV), CSP, bloqueo de login y rate-limit por sesión e IP.
+> **`npm run e2e` borra las tablas de la D1 local antes de empezar.** No lo ejecutes si esa base contiene datos que quieres conservar.
+
+`test/e2e.mjs` es la especificación real del panel: cubre el bot, login y roles, agenda, CRUD completo, conflictos de horario, validaciones, ajustes, horarios y vacaciones por peluquero, servicios, historial, informes (ingresos y CSV), CSP, bloqueo de login y rate-limit por sesión e IP.
+
+Estado de las pruebas (honesto):
+
+- `npm run check`: limpio tras los últimos cambios locales (2026-10-26).
+- Último resultado de `npm run e2e`: **189/189, 0 fallidas, exit 0 (2026-10-30)**, contra `wrangler dev --local` y la D1 local, incluida la reprogramación desde «Mis citas» (14/14).
+- La suite **no se ha vuelto a ejecutar** después de los cambios locales del 2026-10-26 (borra tablas locales; el usuario lo prohibió). `test/e2e.mjs` está adaptado a los cambios, pero sin ejecutar.
+- Hay salidas antiguas con otras cifras (70, 85, 106) que corresponden a versiones anteriores del test. No son comparables. Ver `memoria.md` §8.
 
 ## Integración continua
 
-`.github/workflows/ci.yml` ejecuta `npm run check` y el e2e completo en cada push a `master`, en pull requests y a mano (pestaña *Actions* → *CI* → *Run workflow*). No necesita secretos: usa valores de prueba locales.
+`.github/workflows/ci.yml` ejecuta `npm run check` y el e2e completo en cada push a `master`, en pull requests y a mano (pestaña *Actions* → *CI* → *Run workflow*), además de validar la sintaxis de `setup.ps1`. No necesita secretos: usa valores de prueba locales.
 
-## Plantillas para rellenar los datos del salón
+---
 
-En `datos-salon/` hay plantillas listas para rellenar (tipo de peluquería, nombre/dirección/teléfono, peluqueros con sus horarios y vacaciones, y servicios con duración y precio). Los datos se copian luego en *Ajustes* del panel.
+## Documentación
 
-Para poner el sistema en marcha en un salón nuevo, sigue la guía paso a paso: `instrucciones/PUESTA_EN_MARCHA.md`.
+| Documento | Para qué |
+|---|---|
+| `docs/INDICE_DOCUMENTACION.md` | Índice completo y orden de lectura. |
+| `docs/PUESTA_EN_MARCHA.md` | Poner el sistema en marcha en un salón nuevo, paso a paso. |
+| `docs/CONFIGURACION_PELUQUERIA_REAL.md` | Datos, decisiones y checklist para una peluquería real. |
+| `docs/AUDITORIA_TEXTOS_FIJOS.md` | Qué textos se personalizan y cuáles son comunes. |
+| `docs/RUTAS_Y_API.md` | Rutas, permisos y endpoints JSON. |
+| `docs/MODELO_DE_DATOS.md` | Tablas, estados, retención y valores por defecto. |
+| `docs/OPERACION_Y_DESPLIEGUE.md` | Comandos, despliegue, backups y diagnóstico. |
+| `archivos_historicos/README.md` | Qué hay en el histórico y por qué no es fuente de verdad. |
+
+En `datos-salon/` hay plantillas listas para rellenar (tipo de peluquería, nombre/dirección/teléfono, peluqueros con horarios y vacaciones, y servicios con duración y precio). Los datos se copian luego en *Ajustes* del panel.
+
+---
 
 ## Copia de seguridad automática
 
@@ -111,8 +144,10 @@ Al trabajar en el proyecto, se leen `memoria.md` y `AGENTS.md` antes de tocar na
 
 Copia `.dev.vars.example` como `.dev.vars` para desarrollo local.
 
-| Variable | Qué es | Necesaria? |
+| Variable | Qué es | Necesaria |
 |---|---|---|
+| `ADMIN_PASSWORD` | Contraseña del panel `/admin` | Sí |
+| `STAFF_PASSWORD` | Contraseña del panel `/recepcion` | Sí |
 | `SESSION_SECRET` | Secreto para firmar las sesiones de los paneles (32+ caracteres) | Sí |
 | `VERIFY_TOKEN` | Token para verificar el webhook con Meta | Para el bot |
 | `WHATSAPP_TOKEN` | Token de acceso a la API de WhatsApp | Para enviar mensajes reales |
@@ -120,7 +155,7 @@ Copia `.dev.vars.example` como `.dev.vars` para desarrollo local.
 
 Sin `WHATSAPP_TOKEN` el bot funciona en **modo consola**: registra en los logs de Cloudflare lo que habría enviado, sin conectarse a WhatsApp.
 
-Las variables no secretas (nombre del salón, zona horaria, número de WhatsApp…) están en `wrangler.jsonc`.
+Las variables no secretas (nombre del salón, dirección, teléfono, zona horaria, número de WhatsApp…) están en `wrangler.jsonc` y se pueden sobrescribir desde `/admin/ajustes`.
 
 ---
 
@@ -143,3 +178,13 @@ npx wrangler deploy
 
 O haz doble clic en `instalar.bat` para el proceso guiado completo.
 
+> Un Worker nuevo con una D1 vacía necesita que se aplique `schema.sql`; el despliegue no lo hace solo. Ver `docs/PUESTA_EN_MARCHA.md` §3.
+
+## Estado de producción
+
+Según `memoria.md` §2:
+
+- URL: `https://<tu-worker>.workers.dev`.
+- Worker y D1 desplegados el **2026-10-19**.
+- Los cambios locales posteriores (elección de peluquero, servicios activables, «Próximas citas», filtro de agenda, estado `done`, mejoras visuales) **no están desplegados**.
+- WhatsApp en producción está **desactivado** por decisión del usuario.
