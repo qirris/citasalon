@@ -221,7 +221,7 @@ No existe todavía en Meta. Para activarla:
 - **QR de recepción estático:** `public/qr-recepcion.svg` contiene una URL de producción grabada. Si cambia el dominio o el salón, hay que regenerarlo. La ruta dinámica `/qr-recepcion` genera el QR con el host de la petición.
 - **PWA:** el manifest se sirve en `/manifest.json`, con `start_url` y `scope` en `/recepcion/`. Los iconos son los de `src/pwa.ts`. No hay service worker ni funcionamiento offline.
 - **Auditoría y retención:** `audit_log` se conserva 365 días; sesiones, mensajes procesados, intentos de login y rate-limit se limpian automáticamente. Las citas y los ajustes **no se purgan**.
-- **Backups:** `npm run backup` exporta la D1 remota a `backups/backup.sql` (fuera de git). El workflow de GitHub guarda un artefacto 30 días si existen los secretos `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID` en el repositorio. La restauración es manual y debe probarse antes de confiar en ella.
+- **Backups:** `npm run backup` exporta la D1 remota a `backups/backup.sql` (fuera de git). El workflow de GitHub usa los secretos de repositorio `CLOUDFLARE_API_TOKEN` (permiso propuesto **Account > D1 > Read**, pendiente de confirmar con una ejecución real) y `CLOUDFLARE_ACCOUNT_ID`; valida el SQL ejecutándolo en una SQLite en memoria (debe ejecutarse completo, pasar `PRAGMA integrity_check` y crear realmente la tabla `appointments`) y solo entonces guarda el artefacto 30 días. **Todavía no existe una ejecución satisfactoria confirmada**, los secretos siguen pendientes y el artefacto no está cifrado. La restauración es manual y debe probarse antes de confiar en ella.
 
 ### Archivos o apartados afectados por la personalización
 

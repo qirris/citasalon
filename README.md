@@ -124,7 +124,11 @@ En `datos-salon/` hay plantillas listas para rellenar (tipo de peluquería, nomb
 
 ## Copia de seguridad automática
 
-`.github/workflows/backup.yml` exporta la D1 de producción cada día a las 03:00 UTC (y a mano desde la pestaña *Actions*) y guarda el resultado como artefacto durante 30 días. El backup nunca se sube al repositorio (contiene teléfonos de clientes). Requiere dos secretos en el repositorio de GitHub: `CLOUDFLARE_API_TOKEN` (token de Cloudflare con permiso D1) y `CLOUDFLARE_ACCOUNT_ID`.
+`.github/workflows/backup.yml` está preparado para exportar la D1 de producción cada día a las 03:00 UTC (y a mano desde la pestaña *Actions*) y guardar el resultado como artefacto durante 30 días. **Todavía no hay ninguna ejecución satisfactoria confirmada**: los secretos de GitHub siguen pendientes de configurar y no se ha generado ningún artefacto válido desde Actions.
+
+Para activarlo hacen falta dos secretos de repositorio (`Settings → Secrets and variables → Actions`): `CLOUDFLARE_API_TOKEN` (token de Cloudflare con permiso propuesto **Account > D1 > Read**, pendiente de confirmar con la primera ejecución real) y `CLOUDFLARE_ACCOUNT_ID` (ID de la cuenta donde está `citasalon`). El workflow comprueba que ambos existen, exporta la base `citasalon` y valida `backups/backup.sql` ejecutándolo en una SQLite en memoria: rechaza archivos vacíos, SQL inválido o truncado de forma detectable y exports que no creen realmente la tabla `appointments`. Solo entonces sube el artefacto, con retención de 30 días (configurada, pendiente de verificar en una ejecución correcta).
+
+El SQL puede contener nombres y teléfonos de clientes y **el artefacto no está cifrado** en el workflow actual; `src/backup.ts` implementa cifrado AES-256-GCM, pero el workflow no lo usa. Los pasos manuales están en `docs/PUESTA_EN_MARCHA.md`.
 
 ---
 

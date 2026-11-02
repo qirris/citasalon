@@ -194,14 +194,37 @@ aparece en `/admin`. Si activaste WhatsApp, mira también que llegue el mensaje.
 
 ## 8. Backup automático
 
-En GitHub → repositorio → *Settings* → *Secrets and variables* → *Actions*, añade:
+**Estado:** el workflow está preparado, pero **todavía no se ha verificado** con una ejecución real. Los secretos de GitHub siguen pendientes de configurar y no existe ningún artefacto válido generado por GitHub Actions. La retención de 30 días está configurada en el workflow; se confirmará cuando haya una ejecución correcta.
 
-- `CLOUDFLARE_API_TOKEN` — token de Cloudflare con permiso de **D1**.
-- `CLOUDFLARE_ACCOUNT_ID` — el ID de la cuenta de Cloudflare.
+En GitHub → repositorio → *Settings* → *Secrets and variables* → *Actions* → **Repository secrets**, añade:
 
-El workflow `.github/workflows/backup.yml` exporta la D1 cada día a las 03:00 UTC
-(y a mano desde *Actions*) y guarda el resultado 30 días como artefacto. Nunca se
-sube al repositorio (contiene teléfonos de clientes).
+- `CLOUDFLARE_API_TOKEN` — token de API de Cloudflare. Permiso propuesto: **Account > D1 > Read**, con acceso a la cuenta donde está la base `citasalon`. Es el mínimo necesario para exportar, pero debe confirmarse en la primera ejecución real; si Wrangler devuelve un error de permisos, revisa el alcance del token y la cuenta.
+- `CLOUDFLARE_ACCOUNT_ID` — ID de esa misma cuenta de Cloudflare.
+
+No los crees como *Environment secrets*: el workflow no declara `environment`, así que solo lee los secretos de repositorio.
+
+El workflow `.github/workflows/backup.yml`:
+
+- comprueba que ambos secretos existen y falla con un error explícito si falta alguno;
+- exporta la base remota `citasalon` a `backups/backup.sql` (el archivo está fuera de Git);
+- valida el SQL con `scripts/validate-d1-backup.py` sobre una SQLite en memoria: debe ejecutarse completo, `PRAGMA integrity_check` debe devolver `ok` y debe existir de verdad la tabla `appointments`;
+- sube el artefacto solo si todo lo anterior pasa, con retención de 30 días.
+
+La validación detecta errores de sintaxis y truncamientos que rompen el SQL (por ejemplo, paréntesis o cadenas sin cerrar). **No puede garantizar que el archivo esté completo** si el corte cae justo entre dos sentencias válidas: el export de D1 no incluye un marcador final fiable (no usa `BEGIN`/`COMMIT`; empieza por `PRAGMA defer_foreign_keys=TRUE;`).
+
+### Ejecución manual
+
+1. GitHub → pestaña **Actions**.
+2. Selecciona el workflow **Backup D1**.
+3. Pulsa **Run workflow**.
+4. Ejecuta sobre la rama **master**.
+5. Abre la ejecución y comprueba los pasos **Comprobar variables necesarias**, **Exportar D1 (remoto)** y **Validar artefacto de backup**.
+6. En la página de la ejecución, entra en **Artifacts** y descarga `d1-backup-AAAA-MM-DD` (la fecha es la del día en UTC).
+7. Abre el `.sql` descargado y comprueba que empieza por `PRAGMA defer_foreign_keys=TRUE;` y contiene `CREATE TABLE` y datos de `appointments`.
+
+**Privacidad:** el SQL puede contener nombres y teléfonos de clientes. El artefacto **no está cifrado** en el workflow actual. `src/backup.ts` implementa cifrado AES-256-GCM, pero el workflow no lo utiliza. Descarga el artefacto solo por canales seguros y no lo adjuntes a issues.
+
+**Pendiente:** configurar los secretos, ejecutar el workflow y confirmar que el token tiene permisos suficientes, que la validación pasa y que el artefacto se descarga correctamente. Hasta entonces no se puede afirmar que el backup automático funcione.
 
 ---
 

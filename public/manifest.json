@@ -2,6 +2,7 @@
   "name": "Peluquería",
   "short_name": "Peluquería",
   "start_url": "/recepcion/",
+  "scope": "/recepcion/",
   "display": "standalone",
   "background_color": "#111827",
   "theme_color": "#7c3aed",

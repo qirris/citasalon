@@ -87,13 +87,11 @@ export class SqliteD1 {
   }
 }
 
-/** Esquema completo: schema.sql + migraciones 0001..0003, igual que una base recién creada. */
+/** Esquema completo para una base recién creada: schema.sql ya incluye base + Fase 2.
+ * Las migraciones 0001..0004 son solo para actualizar bases existentes que las necesiten.
+ */
 export async function applySchema(db) {
   db.exec(read("schema.sql"));
-  db.exec(read("migrations/0001_appointments_source_wamid.sql"));
-  db.exec(read("migrations/0002_whatsapp_inbox_outbox.sql"));
-  db.exec(read("migrations/0003_inbox_retry_columns.sql"));
-  db.exec(read("migrations/0004_transaction_guards.sql"));
 }
 
 export function createTestDb() {

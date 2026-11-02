@@ -9,7 +9,28 @@ import { normalizePhone } from "./phone.ts";
 import { runReminders } from "./reminders.ts";
 import { nowLocal } from "./time.ts";
 import { diag, diagError, setDebugContext } from "./debug.ts";
+import { manifestJson, iconResponse, qrRecepcionPage } from "./pwa.ts";
 import type { Env, InboxJob } from "./types.ts";
+
+// ------------------------------------------------------------------ rutas públicas de la PWA y el QR
+
+/** Sirve el manifiesto PWA generado desde los ajustes del salón, con MIME correcto y caché corta
+ *  para que los cambios (nombre, colores, iconos) se noten al actualizar. */
+async function manifestResponse(env: Env): Promise<Response> {
+  const s = await loadSettings(env);
+  return new Response(manifestJson(s), {
+    headers: {
+      "content-type": "application/manifest+json; charset=utf-8",
+      "cache-control": "public, max-age=600, must-revalidate",
+      "content-security-policy": "default-src 'none'",
+    },
+  });
+}
+
+/** Sirve un icono PNG de la PWA con caché larga e inmutable. */
+function iconResponseStatic(base64: string): Response {
+  return iconResponse(base64);
+}
 
 // ------------------------------------------------------------------ webhook de WhatsApp
 interface WaMessage {
@@ -149,6 +170,16 @@ export default {
     setDebugContext(env);
     const url = new URL(req.url);
     try {
+      // --- Rutas públicas de la PWA y el QR (sin autenticación) ---
+      if (url.pathname === "/manifest.json" && req.method === "GET") return await manifestResponse(env);
+      if (url.pathname === "/icon-192.png" && req.method === "GET") return iconResponseStatic("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==");
+      if (url.pathname === "/icon-512.png" && req.method === "GET") return iconResponseStatic("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==");
+      if (url.pathname === "/qr-recepcion" && req.method === "GET") {
+        const s = await loadSettings(env);
+        const baseUrl = new URL(req.url).origin;
+        return qrRecepcionPage(env, s, baseUrl);
+      }
+
       if (url.pathname === "/health") {
         try {
           await env.DB.prepare("SELECT 1").first();
