@@ -189,6 +189,6 @@ O haz doble clic en `instalar.bat` para el proceso guiado completo.
 Según `memoria.md` §2:
 
 - URL: `https://<tu-worker>.workers.dev`.
-- Worker y D1 desplegados el **2026-10-19**.
-- Los cambios locales posteriores (elección de peluquero, servicios activables, «Próximas citas», filtro de agenda, estado `done`, mejoras visuales) **no están desplegados**.
-- WhatsApp en producción está **desactivado** por decisión del usuario.
+- Worker desplegado el **2026-11-03** (commit `5910b1c`, versión `<VERSION_DEPLOYADA>`), sobre la D1 creada el 2026-10-19.
+- Verificado en producción: `/health`, `/manifest.json`, iconos 192×192/512×512, `/qr-recepcion`, `/qr`, `/recepcion` y `/admin` responden 200; la D1 conserva sus datos y no se ejecutaron migraciones.
+- WhatsApp: los secretos `WHATSAPP_TOKEN` y `APP_SECRET` existen en el Worker, pero **no se ha verificado una entrega real** ni los acuses de Meta.

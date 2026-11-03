@@ -1,6 +1,6 @@
 # Tareas pendientes
 
-Estado: núcleo funcional y verificado en local. Los cambios están publicados en `master` (commit `8c4bee4`, 2026-11-03), pero **el Worker de producción sigue siendo la versión del 2026-10-19**: no se ha desplegado. La personalización de una peluquería real está **aplazada** hasta tener cliente y datos.
+Estado: núcleo funcional y verificado en local. Los cambios están publicados en `master` (commit `5910b1c`, 2026-11-03) y **el Worker de producción está desplegado** con esa versión (verificado el 2026-11-03: PWA/QR y paneles 200, iconos 192/512 reales, D1 intacta). La personalización de una peluquería real está **aplazada** hasta tener cliente y datos.
 
 Última revisión: **2026-11-03** (iconos PWA reales, backup cifrado v3 restaurable y verificado con los scripts reales, instalación independiente con Worker/D1/cola propios en `setup.ps1`, backup sin nombre fijo, 95/95 pruebas en verde). El e2e sigue en **189/189, exit 0** del 2026-10-30, no re-ejecutado. El detalle histórico de tareas cerradas está en `../archivos_historicos/tareas/TAREAS_PENDIENTES-2026-10-26.md`).
 
@@ -19,7 +19,7 @@ Criterio: no marcar `[x]` sin haberlo hecho y verificado. Las tareas de personal
 - [x] **Restauración Segura en Sandbox de D1**: Implementado módulo `src/restore-sandbox.ts` y pruebas unitarias (`test/restore-sandbox.test.mjs`) para validar volcado cifrado y ejecutarlo en una base SQLite temporal de pruebas aislada.
 - [x] **Validador de Instalación de Salón**: Creado `src/salon-validator.ts` y `test/salon-validator.test.mjs` para validar la integridad de la configuración comercial y técnica previa al despliegue.
 - [x] **Suite Total de Pruebas**: 95/95 pruebas (`npm test` 51/51 + `test:aux` 44/44), incluyendo cifrado/descifrado real del workflow, manipulación de ciphertext/authTag/IV/checksum, migraciones con datos e instalación con nombres propios.
-- [ ] **Decidir commit, push y deploy** de los cambios posteriores a `8c4bee4`. La versión publicada del Worker es anterior y no incluye las rutas PWA/QR corregidas, el esquema completo ni las mejoras de UI. Commit/push ya hechos para `8c4bee4`; **deploy pendiente** y no se hace sin que el usuario lo pida.
+- [x] **Commit, push y deploy** de los cambios posteriores a `8c4bee4`. **Hecho el 2026-11-03:** commit `5910b1c` en `origin/master`, CI en verde y `wrangler deploy` correcto (versión `<VERSION_DEPLOYADA>`). Verificadas en producción `/health`, `/manifest.json`, iconos 192/512, `/qr-recepcion`, `/qr`, `/recepcion` y `/admin` (200).
 - [ ] **Confirmar la entrega real por Meta** (webhook firmado y envío real). Las pruebas del 2026-10-26 usaron webhook firmado y, en parte, `[modo consola]`; no se envió nada a la API de Meta desde el entorno aislado.
 - [ ] **Ejercitar la pausa del refresco con pestaña oculta** en un navegador real (`document.hidden`). En headless la pestaña siempre está visible.
 
