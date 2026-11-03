@@ -6,17 +6,12 @@ import path from "node:path";
 import { createTestDb, makeEnv } from "./helpers/d1-sqlite.mjs";
 import worker from "../src/index.ts";
 
-function getPngDimensions(filePath) {
-  const buffer = fs.readFileSync(filePath);
-  // Verificar cabecera PNG
+function getPngDimensionsFromBuffer(buffer) {
   const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
   if (!buffer.slice(0, 8).equals(pngSignature)) {
     throw new Error("No es un archivo PNG válido");
   }
-  // Leer ancho y alto del chunk IHDR (offset 16 y 20)
-  const width = buffer.readUInt32BE(16);
-  const height = buffer.readUInt32BE(20);
-  return { width, height };
+  return { width: buffer.readUInt32BE(16), height: buffer.readUInt32BE(20) };
 }
 
 test("PWA: manifest.json existe, es válido y los iconos PNG tienen dimensiones reales correctas", () => {
@@ -39,7 +34,7 @@ test("PWA: manifest.json existe, es válido y los iconos PNG tienen dimensiones 
     assert.ok(fs.existsSync(iconFilePath), `el archivo físico del icono debe existir en ${iconFilePath}`);
 
     const [expectedWidth, expectedHeight] = icon.sizes.split("x").map(Number);
-    const { width, height } = getPngDimensions(iconFilePath);
+    const { width, height } = getPngDimensionsFromBuffer(fs.readFileSync(iconFilePath));
 
     assert.equal(width, expectedWidth, `el ancho del icono ${icon.src} debe coincidir con ${expectedWidth}`);
     assert.equal(height, expectedHeight, `el alto del icono ${icon.src} debe coincidir con ${expectedHeight}`);
@@ -84,18 +79,24 @@ test("PWA: GET /manifest.json devuelve 200, MIME application/manifest+json y cam
     "la CSP del manifest debe ser restrictiva");
 });
 
-test("PWA: GET /icon-192.png devuelve 200 con Content-Type image/png", async () => {
+test("PWA: GET /icon-192.png devuelve el PNG real de 192x192 con Content-Type image/png", async () => {
   const res = await fetchRoute("/icon-192.png");
   assert.equal(res.status, 200, "debe devolver 200");
   assert.ok(res.headers.get("content-type")?.includes("image/png"),
     `Content-Type debe ser image/png, fue: ${res.headers.get("content-type")}`);
-  const body = await res.arrayBuffer();
-  const bytes = new Uint8Array(body);
+  const bytes = Buffer.from(await res.arrayBuffer());
   // Cabecera PNG
   assert.equal(bytes[0], 137);
   assert.equal(bytes[1], 80);
   assert.equal(bytes[2], 78);
   assert.equal(bytes[3], 71);
+  // Dimensiones reales servidas por HTTP
+  const { width, height } = getPngDimensionsFromBuffer(bytes);
+  assert.equal(width, 192, "el icono servido debe medir 192 px de ancho");
+  assert.equal(height, 192, "el icono servido debe medir 192 px de alto");
+  // Debe ser exactamente el mismo binario que public/icon-192.png
+  assert.ok(bytes.equals(fs.readFileSync(path.resolve("public/icon-192.png"))),
+    "el icono servido debe coincidir con public/icon-192.png");
   // Caché larga e inmutable
   assert.ok(res.headers.get("cache-control")?.includes("max-age=31536000"),
     "el icono debe tener caché larga");
@@ -103,17 +104,21 @@ test("PWA: GET /icon-192.png devuelve 200 con Content-Type image/png", async () 
     "el icono debe ser inmutable");
 });
 
-test("PWA: GET /icon-512.png devuelve 200 con Content-Type image/png", async () => {
+test("PWA: GET /icon-512.png devuelve el PNG real de 512x512 con Content-Type image/png", async () => {
   const res = await fetchRoute("/icon-512.png");
   assert.equal(res.status, 200, "debe devolver 200");
   assert.ok(res.headers.get("content-type")?.includes("image/png"),
     `Content-Type debe ser image/png, fue: ${res.headers.get("content-type")}`);
-  const body = await res.arrayBuffer();
-  const bytes = new Uint8Array(body);
+  const bytes = Buffer.from(await res.arrayBuffer());
   assert.equal(bytes[0], 137);
   assert.equal(bytes[1], 80);
   assert.equal(bytes[2], 78);
   assert.equal(bytes[3], 71);
+  const { width, height } = getPngDimensionsFromBuffer(bytes);
+  assert.equal(width, 512, "el icono servido debe medir 512 px de ancho");
+  assert.equal(height, 512, "el icono servido debe medir 512 px de alto");
+  assert.ok(bytes.equals(fs.readFileSync(path.resolve("public/icon-512.png"))),
+    "el icono servido debe coincidir con public/icon-512.png");
 });
 
 test("PWA: GET /qr-recepcion devuelve 200 con HTML, QR SVG y datos del salón", async () => {

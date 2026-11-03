@@ -33,6 +33,7 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
         run: |
           missing=0
           if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
@@ -43,10 +44,14 @@ jobs:
             echo "::error::Falta el secreto CLOUDFLARE_ACCOUNT_ID en GitHub Secrets (Settings > Secrets and variables > Actions)."
             missing=1
           fi
+          if [ -z "$BACKUP_ENCRYPTION_KEY" ]; then
+            echo "::error::Falta el secreto BACKUP_ENCRYPTION_KEY en GitHub Secrets; sin él no se genera ningún backup."
+            missing=1
+          fi
           if [ "$missing" -ne 0 ]; then
             exit 1
           fi
-          echo "Secretos presentes: CLOUDFLARE_API_TOKEN y CLOUDFLARE_ACCOUNT_ID."
+          echo "Secretos requeridos presentes (los valores no se imprimen)."
 
       - name: Fecha del día
         id: date
@@ -88,7 +93,18 @@ jobs:
             echo "::error::Falta el secreto BACKUP_ENCRYPTION_KEY"
             exit 1
           fi
-          node scripts/encrypt-backup.mjs backups/backup.sql
+          node scripts/encrypt-backup.mjs backups/backup.sql --out backups/backup.sql.enc
+
+      - name: Verificar descifrado antes de publicar
+        env:
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: |
+          node scripts/decrypt-backup.mjs backups/backup.sql.enc --out "$RUNNER_TEMP/restore-check.sql"
+          if ! cmp -s backups/backup.sql "$RUNNER_TEMP/restore-check.sql"; then
+            echo "::error::El SQL descifrado no coincide con el original; no se publica el artefacto."
+            exit 1
+          fi
+          echo "Descifrado verificado: el artefacto cifrado se puede recuperar."
 
       - name: Subir el backup cifrado como artefacto
         uses: actions/upload-artifact@v4
@@ -97,3 +113,9 @@ jobs:
           path: backups/backup.sql.enc
           if-no-files-found: error
           retention-days: 30
+
+      - name: Limpiar archivos temporales
+        if: always()
+        run: |
+          rm -f backups/backup.sql backups/backup.sql.enc "$RUNNER_TEMP/restore-check.sql"
+          echo "Temporales eliminados (SQL en claro y copia de verificación)."

@@ -40,9 +40,10 @@
   ],
 
   // Cola de WhatsApp (Fase 2). Wrangler la simula en local sin crear nada en Cloudflare.
-  // Para desplegar en remoto haría falta crearla antes:  wrangler queues create whatsapp-inbox
-  // (no se ha creado ningún recurso remoto). El Inbox de D1 es la fuente de verdad: si la cola
-  // falla o no existe, el webhook drena en el acto y el cron recupera lo que quede.
+  // En remoto debe existir antes de desplegar:  wrangler queues create whatsapp-inbox
+  // Una cola por instalación (no compartirla entre peluquerías). `setup.ps1` la crea y
+  // actualiza este nombre. El Inbox de D1 es la fuente de verdad: si la cola falla o no
+  // existe, el webhook drena en el acto y el cron recupera lo que quede.
   "queues": {
     "producers": [
       { "binding": "WHATSAPP_QUEUE", "queue": "whatsapp-inbox" }

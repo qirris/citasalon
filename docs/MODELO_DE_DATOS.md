@@ -1,8 +1,8 @@
 # Modelo de datos
 
-Esquema real de la base D1 (SQLite). Fuente: `schema.sql`, `migrations/` y consultas de `src/db.ts` (revisado el 2026-11-01).
+Esquema real de la base D1 (SQLite). Fuente: `schema.sql`, `migrations/` y consultas de `src/db.ts` (revisado el 2026-11-03).
 
-`schema.sql` es idempotente (`CREATE TABLE IF NOT EXISTS`), así que puede aplicarse varias veces sin borrar datos. **Ojo:** `schema.sql` no crea las tablas de la Fase 2 (Inbox, Outbox, secuencias y bloqueos); una D1 nueva necesita además `migrations/0001…`, `0002…` y `0003…`.
+`schema.sql` es el esquema completo e idempotente (`CREATE TABLE/INDEX IF NOT EXISTS`) para una instalación nueva: incluye tablas base y Fase 2 (Inbox, Outbox, secuencias, bloqueos, guards y `source_wamid`). Se puede aplicar varias veces sin borrar datos. **En una D1 nueva no ejecutes después las migraciones `0001`–`0004`**: duplicarían cambios ya presentes (y `ALTER TABLE` de `0001` fallaría si la columna existe). Las migraciones solo se usan para actualizar bases creadas con una versión anterior.
 
 ## `appointments` — citas
 
@@ -205,8 +205,8 @@ No hay claves foráneas declaradas. Las relaciones son lógicas:
 ## Copias y datos personales
 
 - La base contiene **nombres y teléfonos de clientes**: los backups no se suben al repositorio.
-- `npm run backup` exporta a `backups/backup.sql` (fuera de git).
-- El workflow `.github/workflows/backup.yml` guarda un artefacto durante 30 días.
+- `npm run backup` exporta a `backups/backup.sql` (fuera de git); `node scripts/encrypt-backup.mjs backups/backup.sql` genera el `.sql.enc` cifrado.
+- El workflow `.github/workflows/backup.yml` sube **solo** el artefacto cifrado `.sql.enc` durante 30 días y borra el SQL en claro al terminar.
 - No existe borrado por cliente ni política de retención de citas implementada; ver pendientes legales en `CONFIGURACION_PELUQUERIA_REAL.md`.
 
 Ver `RUTAS_Y_API.md` para las operaciones que modifican estos datos.

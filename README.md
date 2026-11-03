@@ -101,7 +101,7 @@ Estado de las pruebas (honesto):
 
 ## Integración continua
 
-`.github/workflows/ci.yml` ejecuta `npm run check` y el e2e completo en cada push a `master`, en pull requests y a mano (pestaña *Actions* → *CI* → *Run workflow*), además de validar la sintaxis de `setup.ps1`. No necesita secretos: usa valores de prueba locales.
+`.github/workflows/ci.yml` ejecuta `npm run check` y `npm run test:all` en cada push a `master`, en pull requests y a mano (pestaña *Actions* → *CI* → *Run workflow*), además de validar la sintaxis de `setup.ps1`. No ejecuta el e2e porque este borra tablas de la D1 local. No necesita secretos: usa valores de prueba locales.
 
 ---
 
@@ -124,11 +124,11 @@ En `datos-salon/` hay plantillas listas para rellenar (tipo de peluquería, nomb
 
 ## Copia de seguridad automática
 
-`.github/workflows/backup.yml` está preparado para exportar la D1 de producción cada día a las 03:00 UTC (y a mano desde la pestaña *Actions*) y guardar el resultado como artefacto durante 30 días. **Todavía no hay ninguna ejecución satisfactoria confirmada**: los secretos de GitHub siguen pendientes de configurar y no se ha generado ningún artefacto válido desde Actions.
+`.github/workflows/backup.yml` está preparado para exportar la D1 de producción cada día a las 03:00 UTC (y a mano desde la pestaña *Actions*) y guardar **solo un artefacto cifrado** (`.sql.enc`) durante 30 días. **Todavía no hay ninguna ejecución satisfactoria confirmada**: los secretos de GitHub siguen pendientes de configurar y no se ha generado ningún artefacto válido desde Actions.
 
-Para activarlo hacen falta dos secretos de repositorio (`Settings → Secrets and variables → Actions`): `CLOUDFLARE_API_TOKEN` (token de Cloudflare con permiso propuesto **Account > D1 > Read**, pendiente de confirmar con la primera ejecución real) y `CLOUDFLARE_ACCOUNT_ID` (ID de la cuenta donde está `citasalon`). El workflow comprueba que ambos existen, exporta la base `citasalon` y valida `backups/backup.sql` ejecutándolo en una SQLite en memoria: rechaza archivos vacíos, SQL inválido o truncado de forma detectable y exports que no creen realmente la tabla `appointments`. Solo entonces sube el artefacto, con retención de 30 días (configurada, pendiente de verificar en una ejecución correcta).
+Para activarlo hacen falta tres secretos de repositorio (`Settings → Secrets and variables → Actions`): `CLOUDFLARE_API_TOKEN` (token de Cloudflare con permiso propuesto **Account > D1 > Read**, pendiente de confirmar con la primera ejecución real), `CLOUDFLARE_ACCOUNT_ID` (ID de la cuenta donde está `citasalon`) y `BACKUP_ENCRYPTION_KEY` (contraseña larga y aleatoria, distinta de cualquier otra; por ejemplo `openssl rand -base64 32`). El workflow comprueba que los tres existen, exporta la base `citasalon`, valida `backups/backup.sql` ejecutándolo en una SQLite en memoria, lo cifra con AES-256-GCM, verifica el descifrado comparándolo con el original y solo entonces sube el artefacto. El SQL en claro se borra siempre al finalizar, incluso si falla un paso.
 
-El SQL puede contener nombres y teléfonos de clientes y **el artefacto no está cifrado** en el workflow actual; `src/backup.ts` implementa cifrado AES-256-GCM, pero el workflow no lo usa. Los pasos manuales están en `docs/PUESTA_EN_MARCHA.md`.
+**Nunca se sube el SQL sin cifrar.** El procedimiento de descifrado y restauración aislada está en `docs/OPERACION_Y_DESPLIEGUE.md`.
 
 ---
 

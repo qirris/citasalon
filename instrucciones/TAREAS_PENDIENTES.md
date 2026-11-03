@@ -1,8 +1,8 @@
 # Tareas pendientes
 
-Estado: núcleo funcional y verificado en local; los cambios posteriores al 2026-10-19 **siguen sin commit ni deploy**. La personalización de una peluquería real está **aplazada** hasta tener cliente y datos.
+Estado: núcleo funcional y verificado en local. Los cambios están publicados en `master` (commit `8c4bee4`, 2026-11-03), pero **el Worker de producción sigue siendo la versión del 2026-10-19**: no se ha desplegado. La personalización de una peluquería real está **aplazada** hasta tener cliente y datos.
 
-Última revisión: **2026-11-01** (Fase 2 completada: Inbox duradero con dedup por WAMID, Consumer, orden estricto por teléfono, bloqueos con fencing token, Outbox con reintentos y recuperación, bot sin escrituras en D1. Migración `0003` aplicada a la D1 local y `npm test` **51/51** con SQLite real; `npm run check` limpio. CI verificado en GitHub con el commit `8aee859`). El e2e sigue en **189/189, exit 0** del 2026-10-30, no re-ejecutado en esta ronda. El detalle histórico de tareas cerradas está en `../archivos_historicos/tareas/TAREAS_PENDIENTES-2026-10-26.md`).
+Última revisión: **2026-11-03** (iconos PWA reales, backup cifrado v3 restaurable y verificado con los scripts reales, instalación independiente con Worker/D1/cola propios en `setup.ps1`, backup sin nombre fijo, 95/95 pruebas en verde). El e2e sigue en **189/189, exit 0** del 2026-10-30, no re-ejecutado. El detalle histórico de tareas cerradas está en `../archivos_historicos/tareas/TAREAS_PENDIENTES-2026-10-26.md`).
 
 Criterio: no marcar `[x]` sin haberlo hecho y verificado. Las tareas de personalización no son «pendientes de código»: dependen de datos y decisiones del propietario.
 
@@ -18,8 +18,8 @@ Criterio: no marcar `[x]` sin haberlo hecho y verificado. Las tareas de personal
 - [x] ~~**Ajustar el conteo de «sin duplicados» de la prueba e2e de reprogramación y re-ejecutar.**~~ **Hecho el 2026-10-30**: `split('<article class="appt-card">').slice(1)` (descarta la plantilla JS del refresco y el trozo previo con la fila de tabla) y `npm run e2e` → **189/189, 0 fallidas, exit 0**, reprogramación **14/14**. Sin pendientes de esta prueba.
 - [x] **Restauración Segura en Sandbox de D1**: Implementado módulo `src/restore-sandbox.ts` y pruebas unitarias (`test/restore-sandbox.test.mjs`) para validar volcado cifrado y ejecutarlo en una base SQLite temporal de pruebas aislada.
 - [x] **Validador de Instalación de Salón**: Creado `src/salon-validator.ts` y `test/salon-validator.test.mjs` para validar la integridad de la configuración comercial y técnica previa al despliegue.
-- [x] **Suite Total de Pruebas**: Amplicación del motor de pruebas con 59 pruebas globales pasando al 100%.
-- [ ] **Decidir commit, push y deploy** de los cambios locales del 2026-10-25/26. La versión publicada del Worker es anterior y no incluye paso de peluquero, «Próximas citas», idempotencia por `wamid` ni la modernización visual. No se hace sin que el usuario lo pida.
+- [x] **Suite Total de Pruebas**: 95/95 pruebas (`npm test` 51/51 + `test:aux` 44/44), incluyendo cifrado/descifrado real del workflow, manipulación de ciphertext/authTag/IV/checksum, migraciones con datos e instalación con nombres propios.
+- [ ] **Decidir commit, push y deploy** de los cambios posteriores a `8c4bee4`. La versión publicada del Worker es anterior y no incluye las rutas PWA/QR corregidas, el esquema completo ni las mejoras de UI. Commit/push ya hechos para `8c4bee4`; **deploy pendiente** y no se hace sin que el usuario lo pida.
 - [ ] **Confirmar la entrega real por Meta** (webhook firmado y envío real). Las pruebas del 2026-10-26 usaron webhook firmado y, en parte, `[modo consola]`; no se envió nada a la API de Meta desde el entorno aislado.
 - [ ] **Ejercitar la pausa del refresco con pestaña oculta** en un navegador real (`document.hidden`). En headless la pestaña siempre está visible.
 
@@ -33,12 +33,12 @@ Criterio: no marcar `[x]` sin haberlo hecho y verificado. Las tareas de personal
 
 ### 1.3 Fase 3 — puesta en producción y verificación real
 
-- [ ] Crear la cola remota antes de desplegar: `npx wrangler queues create whatsapp-inbox` (en local Wrangler la simula; **no se ha creado ningún recurso remoto**).
+- [x] ~~Crear la cola remota antes de desplegar.~~ **Hecho**: `whatsapp-inbox` existe desde el 2026-11-01 y se verificó con `wrangler queues list` el 2026-11-03. Para un salón nuevo, crear una cola propia con nombre único (`setup.ps1` la crea).
 - [ ] Probar el `queue()` real de Wrangler con la cola local (hoy las pruebas ejercitan `drainInbox`, no el consumidor de cola).
 - [ ] Verificar la entrega real por Meta y los acuses (`sent/delivered/read/failed`) actualizando `meta_status`, sin duplicar mensajes.
 - [ ] Verificación integrada de Inbox/Outbox sobre una **copia** de la D1 y, si se autoriza, e2e completo.
 - [ ] Observabilidad: contar `DEAD`, `FAILED` y `UNKNOWN`, decidir alertas y retirar los `[DIAG]`.
-- [ ] Aplicar a la D1 remota `schema.sql` **y** las migraciones `0001`–`0003` (ver §4); hoy `schema.sql` no crea las tablas del Inbox/Outbox.
+- [ ] Aplicar a una D1 remota **nueva** `schema.sql` (esquema completo, incluye Inbox/Outbox). **No aplicar después las migraciones `0001`–`0004`**: ya están incluidas. En una base antigua, aplicar solo las migraciones pendientes en orden; ver `../docs/OPERACION_Y_DESPLIEGUE.md`.
 
 ---
 
@@ -77,7 +77,7 @@ No hay cliente todavía y no se inventan datos. El procedimiento completo, las d
 
 Resumen de lo que falta:
 
-- [ ] Identidad: nombre comercial, nombre corto de la PWA, logo/iconos reales (hoy placeholders de 1×1 px) y decisión sobre colores.
+- [ ] Identidad: nombre comercial, nombre corto de la PWA, logo/iconos definitivos del salón (hoy hay PNG reales 192/512 genéricos, no placeholders 1×1) y decisión sobre colores.
 - [ ] Establecimiento: dirección, teléfono público, zona horaria, horario general, descansos, días cerrados y vacaciones.
 - [ ] Personal: peluqueros, horarios/vacaciones individuales y decisión sobre especialidades por peluquero.
 - [ ] Servicios: `id`, nombre, duración y precio reales; condiciones especiales si las hubiera.
@@ -92,13 +92,14 @@ Resumen de lo que falta:
 Solo cuando el propietario lo autorice. La secuencia de comandos está en `../docs/PUESTA_EN_MARCHA.md`; el resumen es:
 
 - [ ] Crear/elegir cuenta de Cloudflare y D1 del salón.
-- [ ] Aplicar `schema.sql` a la D1 (es idempotente, pero se aplica a mano; no hay migración automática) **y después** las migraciones `migrations/0001_appointments_source_wamid.sql`, `0002_whatsapp_inbox_outbox.sql` y `0003_inbox_retry_columns.sql`. Sin ellas el Worker falla al primer mensaje: `schema.sql` **no** crea Inbox, Outbox, secuencias ni bloqueos.
-- [ ] Crear la cola `whatsapp-inbox` (`npx wrangler queues create whatsapp-inbox`) si se va a usar la cola; el Inbox de D1 funciona sin ella (webhook + cron).
-- [ ] Rellenar `wrangler.jsonc` con datos reales y `database_id`.
+- [ ] Aplicar `schema.sql` a la D1 **nueva** (esquema completo; no hay migración automática) y **no** ejecutar después `0001`–`0004`. Solo en bases creadas con una versión anterior se aplican las migraciones pendientes, en orden y comprobando el estado.
+- [ ] Crear una cola **propia** para el salón (`npx wrangler queues create <nombre>-inbox`) y poner el mismo nombre en las dos entradas de `wrangler.jsonc`; no la compartas con otra peluquería (se mezclarían mensajes). `setup.ps1` lo hace automáticamente.
+- [ ] Rellenar `wrangler.jsonc` con datos reales y `database_id` (o usar `setup.ps1`, que pide nombres de Worker, D1 y cola, crea los recursos y actualiza `wrangler.jsonc`).
 - [ ] Configurar secretos de panel (`ADMIN_PASSWORD`, `STAFF_PASSWORD`, `SESSION_SECRET`, `VERIFY_TOKEN`) y, solo si se activa WhatsApp, `APP_SECRET`/`WHATSAPP_TOKEN`.
 - [ ] `npm run deploy`, anotar URL y configurar Meta si aplica.
 - [ ] Regenerar `public/qr-recepcion.svg` si cambia el dominio.
-- [ ] Añadir secretos de GitHub para el backup (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`).
+- [ ] Añadir secretos de GitHub para el backup (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `BACKUP_ENCRYPTION_KEY`) y ejecutar el workflow una vez.
+- [ ] Probar la restauración real del primer `.sql.enc` en una D1 local aislada (`../docs/OPERACION_Y_DESPLIEGUE.md` §2).
 - [ ] Ejecutar la checklist de `CONFIGURACION_PELUQUERIA_REAL.md` y entregar URLs/credenciales por canal seguro.
 
 ---

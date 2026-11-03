@@ -14,7 +14,7 @@ Inventario de las rutas HTTP que sirve el Worker. Verificado contra `src/index.t
 | `GET` | `/webhook` | Verificación del webhook de Meta (`hub.verify_token` contra `VERIFY_TOKEN`). |
 | `POST` | `/webhook` | Recepción de mensajes de WhatsApp; valida `X-Hub-Signature-256` si existe `APP_SECRET`. |
 | `GET` | `/manifest.json` | Manifest PWA generado con los datos del salón. |
-| `GET` | `/icon-192.png`, `/icon-512.png` | Iconos PWA (hoy placeholders de 1×1 px). |
+| `GET` | `/icon-192.png`, `/icon-512.png` | Iconos PWA reales (192×192 y 512×512), embebidos desde `public/` con caché inmutable. |
 | `GET` | `/qr` | Cartel público con QR hacia `wa.me`. |
 | `GET` | `/qr-recepcion` | Cartel de recepción con QR a `/recepcion` del host actual. |
 | `GET` | `/` | Redirige a `/admin/`. |

@@ -40,11 +40,13 @@ npx wrangler login
 ```
 
 **Vía rápida**: doble clic en `instalar.bat` (o `setup.ps1`). Hace los pasos 1,
-4 y 5 de forma guiada, genera las contraseñas y te prepara la URL/token para el
-paso 6. Si usas esta vía,
-puedes saltarte los pasos manuales equivalentes, pero **sigue necesitando** los
-datos del salón (paso 2) y, si vas a activar WhatsApp, el webhook en Meta (paso 6).
-El token de WhatsApp es opcional: si lo dejas vacío, el bot queda en modo consola.
+3, 4, 5 y 6 de forma guiada: pide un **nombre de Worker, una D1 y una cola propios**
+(no reutiliza los de otra peluquería), crea la **D1 nueva y vacía**, aplica
+`schema.sql`, crea la cola, despliega, genera las contraseñas y te prepara la
+URL/token para el paso 6. Si usas esta vía, puedes saltarte los pasos manuales
+equivalentes, pero **sigue necesitando** los datos del salón (paso 2) y, si vas a
+activar WhatsApp, el webhook en Meta (paso 6). El token de WhatsApp es opcional:
+si lo dejas vacío, el bot queda en modo consola.
 
 ---
 
@@ -90,20 +92,35 @@ La D1 `citasalon` ya existe. Solo asegúrate del esquema:
 npx wrangler d1 execute citasalon --remote --file=schema.sql
 ```
 
-### Si es un salón nuevo con worker y D1 propios
+### Si es un salón nuevo con Worker, D1 y cola propios
+
+Cada peluquería debe tener su **propio Worker, su propia D1 y su propia cola**.
+**No reutilices** los de otra instalación ni apliques `schema.sql` sobre una base
+con datos: se mezclarían citas y mensajes.
+
+Elige nombres únicos (solo minúsculas, números y guiones):
 
 ```powershell
-npx wrangler d1 create citasalon
+npx wrangler d1 create salon-nombre-db
 ```
 
-Copia el `database_id` que devuelve y pégalo en `wrangler.jsonc` → `d1_databases[0].database_id`.
-Luego aplica el esquema:
+Copia el `database_id` que devuelve y pégalo en `wrangler.jsonc`
+(`d1_databases[0].database_id`), junto con el nombre del Worker (`name`) y el de
+la cola (`queues.producers[0].queue` y `queues.consumers[0].queue`). Luego aplica
+el esquema completo (solo crea estructura; no borra datos):
 
 ```powershell
-npx wrangler d1 execute citasalon --remote --file=schema.sql
+npx wrangler d1 execute salon-nombre-db --remote --file=schema.sql
 ```
 
-> El `schema.sql` es idempotente: se puede ejecutar varias veces sin romper nada. **No hay migraciones automáticas**: al crear una D1 nueva hay que aplicarlo a mano (local y remoto) antes de usar el Worker.
+`setup.ps1` hace todo esto automáticamente: pide los tres nombres, crea la D1 y la
+cola, actualiza `wrangler.jsonc` y aborta si la D1 ya existe, para no tocar datos
+de otra instalación.
+
+> `schema.sql` es el esquema completo para una instalación nueva e idempotente
+> (`CREATE ... IF NOT EXISTS`). **No ejecutes después las migraciones `0001`–`0004`**:
+> ya están incluidas. Las migraciones solo se usan para actualizar una base creada
+> con una versión anterior; ver `docs/OPERACION_Y_DESPLIEGUE.md`.
 
 ---
 
@@ -130,6 +147,17 @@ vacío el token de WhatsApp: el script no lo exige y el bot queda en modo consol
 ---
 
 ## 5. Desplegar
+
+Antes de desplegar, crea la cola de WhatsApp. **Una cola por instalación** (no la
+compartas entre peluquerías: los mensajes se mezclarían). `setup.ps1` la crea con
+el nombre que elijas; si lo haces a mano, usa un nombre único y actualízalo en
+`wrangler.jsonc`:
+
+```powershell
+npx wrangler queues create salon-nombre-inbox
+```
+
+Después:
 
 ```powershell
 npm run deploy
@@ -194,21 +222,25 @@ aparece en `/admin`. Si activaste WhatsApp, mira también que llegue el mensaje.
 
 ## 8. Backup automático
 
-**Estado:** el workflow está preparado, pero **todavía no se ha verificado** con una ejecución real. Los secretos de GitHub siguen pendientes de configurar y no existe ningún artefacto válido generado por GitHub Actions. La retención de 30 días está configurada en el workflow; se confirmará cuando haya una ejecución correcta.
+**Estado:** el workflow está preparado y probado en local, pero **todavía no se ha verificado** con una ejecución real en GitHub Actions. Los secretos de GitHub siguen pendientes de configurar y no existe ningún artefacto generado por el workflow. La retención de 30 días está configurada; se confirmará cuando haya una ejecución correcta.
 
 En GitHub → repositorio → *Settings* → *Secrets and variables* → *Actions* → **Repository secrets**, añade:
 
 - `CLOUDFLARE_API_TOKEN` — token de API de Cloudflare. Permiso propuesto: **Account > D1 > Read**, con acceso a la cuenta donde está la base `citasalon`. Es el mínimo necesario para exportar, pero debe confirmarse en la primera ejecución real; si Wrangler devuelve un error de permisos, revisa el alcance del token y la cuenta.
 - `CLOUDFLARE_ACCOUNT_ID` — ID de esa misma cuenta de Cloudflare.
+- `BACKUP_ENCRYPTION_KEY` — contraseña larga y aleatoria (mínimo 16 caracteres; recomendado `openssl rand -base64 32`). Debe ser **independiente** de `ADMIN_PASSWORD`, `STAFF_PASSWORD` y `SESSION_SECRET`. Si se pierde, los backups cifrados no se podrán recuperar.
 
 No los crees como *Environment secrets*: el workflow no declara `environment`, así que solo lee los secretos de repositorio.
 
 El workflow `.github/workflows/backup.yml`:
 
-- comprueba que ambos secretos existen y falla con un error explícito si falta alguno;
+- comprueba que los tres secretos existen y falla con un error explícito si falta alguno, antes de exportar nada;
 - exporta la base remota `citasalon` a `backups/backup.sql` (el archivo está fuera de Git);
 - valida el SQL con `scripts/validate-d1-backup.py` sobre una SQLite en memoria: debe ejecutarse completo, `PRAGMA integrity_check` debe devolver `ok` y debe existir de verdad la tabla `appointments`;
-- sube el artefacto solo si todo lo anterior pasa, con retención de 30 días.
+- cifra el SQL validado con AES-256-GCM mediante `scripts/encrypt-backup.mjs`, con IV aleatorio y SHA-256 de integridad embebidos en el propio archivo `.sql.enc`;
+- descifra el artefacto y lo compara con el original (`cmp`) antes de publicar;
+- sube **únicamente** `backups/backup.sql.enc`, con retención de 30 días;
+- borra siempre el SQL en claro y la copia de verificación, incluso si falla un paso.
 
 La validación detecta errores de sintaxis y truncamientos que rompen el SQL (por ejemplo, paréntesis o cadenas sin cerrar). **No puede garantizar que el archivo esté completo** si el corte cae justo entre dos sentencias válidas: el export de D1 no incluye un marcador final fiable (no usa `BEGIN`/`COMMIT`; empieza por `PRAGMA defer_foreign_keys=TRUE;`).
 
@@ -218,13 +250,13 @@ La validación detecta errores de sintaxis y truncamientos que rompen el SQL (po
 2. Selecciona el workflow **Backup D1**.
 3. Pulsa **Run workflow**.
 4. Ejecuta sobre la rama **master**.
-5. Abre la ejecución y comprueba los pasos **Comprobar variables necesarias**, **Exportar D1 (remoto)** y **Validar artefacto de backup**.
-6. En la página de la ejecución, entra en **Artifacts** y descarga `d1-backup-AAAA-MM-DD` (la fecha es la del día en UTC).
-7. Abre el `.sql` descargado y comprueba que empieza por `PRAGMA defer_foreign_keys=TRUE;` y contiene `CREATE TABLE` y datos de `appointments`.
+5. Abre la ejecución y comprueba los pasos **Comprobar variables necesarias**, **Exportar D1 (remoto)**, **Validar artefacto de backup**, **Cifrar backup** y **Verificar descifrado antes de publicar**.
+6. En la página de la ejecución, entra en **Artifacts** y descarga `d1-backup-AAAA-MM-DD` (la fecha es la del día en UTC). Contiene un único archivo `.sql.enc`.
+7. Comprueba que el `.enc` **no** contiene texto SQL legible y que el paso de limpieza se ha ejecutado.
 
-**Privacidad:** el SQL puede contener nombres y teléfonos de clientes. El artefacto **no está cifrado** en el workflow actual. `src/backup.ts` implementa cifrado AES-256-GCM, pero el workflow no lo utiliza. Descarga el artefacto solo por canales seguros y no lo adjuntes a issues.
+**Privacidad:** el backup contiene nombres y teléfonos de clientes. El artefacto está cifrado con AES-256-GCM; el SQL en claro nunca se sube y se borra al terminar el workflow. Descarga el artefacto solo por canales seguros y no lo adjuntes a issues. El procedimiento de descifrado y restauración aislada está en `docs/OPERACION_Y_DESPLIEGUE.md` §2.
 
-**Pendiente:** configurar los secretos, ejecutar el workflow y confirmar que el token tiene permisos suficientes, que la validación pasa y que el artefacto se descarga correctamente. Hasta entonces no se puede afirmar que el backup automático funcione.
+**Pendiente:** configurar los secretos, ejecutar el workflow y confirmar que el token tiene permisos suficientes, que la validación y el cifrado pasan y que el artefacto se descarga y se puede restaurar. Hasta entonces no se puede afirmar que el backup automático funcione en producción.
 
 ---
 
