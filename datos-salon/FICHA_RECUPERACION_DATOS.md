@@ -1,6 +1,6 @@
 # Ficha de Recuperación de Datos del Salón
 
-Esta ficha unifica toda la información necesaria para configurar el sistema `citasalon`. Por favor, rellena los campos y entrégala al técnico responsable de la instalación.
+Esta ficha unifica toda la información necesaria para configurar el sistema `CitaSalón`. Por favor, rellena los campos y entrégala al técnico responsable de la instalación.
 
 ---
 

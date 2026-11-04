@@ -7,7 +7,7 @@ Punto de partida para saber **qué documento leer** y **cuál manda** cuando hay
 | Cuándo | Documento |
 |---|---|
 | Primera vez en el proyecto | `../README.md` |
-| Antes de tocar código  | `../AGENTS.md` → `../memoria.md` → `../instrucciones/INSTRUCCIONES_GENERALES.md` |
+| Antes de tocar código | `../AGENTS.md` → `../memoria.md` → `../instrucciones/INSTRUCCIONES_GENERALES.md` |
 | Entender el estado real y lo verificado | `../memoria.md` |
 | Entender la arquitectura y el modelo de datos | `ARQUITECTURA` en `../instrucciones/ARQUITECTURA.md`, `MODELO_DE_DATOS.md`, `RUTAS_Y_API.md` |
 | Poner el sistema en marcha en un salón | `PUESTA_EN_MARCHA.md` |
@@ -46,11 +46,11 @@ Punto de partida para saber **qué documento leer** y **cuál manda** cuando hay
 2. **`memoria.md`** manda sobre el estado y las verificaciones.
 3. **`instrucciones/`** manda sobre cómo trabajar.
 4. **`docs/`** explica el producto para personas; si contradice al código, se corrige el documento.
-5. **`archivos_historicos/`** no manda: se conserva como trazabilidad.
+5. El **historial de `memoria.md` §11** no manda: se conserva como trazabilidad.
 
 ## Mantenimiento
 
 - Al mover o renombrar un documento activo, actualizar este índice y las referencias de `README.md`, `AGENTS.md` y `memoria.md`.
 - No duplicar contenido: enlazar al documento que corresponda.
-- Los documentos históricos no se reescriben; se explican en `../archivos_historicos/README.md`.
+- El historial de `memoria.md` §11 no se reescribe; se conserva como trazabilidad.
 - No guardar secretos, contraseñas ni tokens en ningún documento.

@@ -90,4 +90,4 @@ El proyecto **sí** es un repositorio git (rama `master`, remoto privado `https:
 - **`isValidDay` tolerante a fechas imposibles**: devuelve `false` (en vez de lanzar 500 por `toISOString()` sobre `Invalid Date`), cayendo al día de hoy como el código pretendía.
 - 2026-10-29 (organización documental):
   - **Separar reglas de trabajo y guías para personas**: `instrucciones/` contiene solo reglas de trabajo; las guías (`PUESTA_EN_MARCHA.md`, `CONFIGURACION_PELUQUERIA_REAL.md`, `AUDITORIA_TEXTOS_FIJOS.md`) viven en `docs/`, junto al índice y las referencias técnicas.
-  - **El histórico no se reescribe**: memorias antiguas, auditorías, correcciones y salidas de pruebas se conservan en `archivos_historicos/` con un `README.md` que explica rutas y cifras antiguas. El código antiguo sin proyecto ejecutable se conserva en `../versiones_anteriores/`.
+  - **El histórico no se reescribe**: el detalle cronológico se conserva en `memoria.md` §11 y puede citar rutas o cifras antiguas.

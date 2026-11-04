@@ -136,12 +136,8 @@ No son requisitos del núcleo.
 - **No hacer commit, push ni deploy** sin petición expresa.
 - **No volver atrás** estas decisiones ya verificadas: Inbox duradero con dedup por WAMID y orden por teléfono (Fase 2), CSP por página (`CSP_FORM`/`CSP_AGENDA`), estado `done` (Realizada), `workingStylists()` para asignar, desactivar servicios en vez de borrarlos, «Próximas citas» + `no-store`.
 - **No marcar como terminado** algo no verificado, ni sumar cifras de pruebas de ejecuciones distintas (70, 85, 106, 154…).
-- **No reescribir** los documentos de `archivos_historicos/` ni el código de `../versiones_anteriores/`: se conservan como trazabilidad.
+- **No borrar el historial de `memoria.md`**: se conserva como trazabilidad aunque cite rutas o cifras antiguas.
 
 ## Histórico de tareas
 
-El detalle cronológico de todo lo cerrado hasta el 2026-10-26 (rondas de seguridad, agenda, huecos, peluqueros, bot, UI, verificaciones) se conserva en:
-
-- `../archivos_historicos/tareas/TAREAS_PENDIENTES-2026-10-26.md`
-
-Ese archivo no es fuente de verdad y puede citar rutas antiguas; se explica en `../archivos_historicos/README.md`.
+El detalle cronológico de lo cerrado hasta la fecha (rondas de seguridad, agenda, huecos, peluqueros, bot, UI y verificaciones) está en `../memoria.md` §11.

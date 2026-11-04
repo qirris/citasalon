@@ -26,7 +26,7 @@ Bot de reservas de peluquería por WhatsApp + paneles `/admin`, `/recepcion` y c
 4. Comprobar el estado real del código y contrastarlo con la memoria. Si difieren: manda el código y actualiza `memoria.md`.
 5. Revisar `instrucciones/TAREAS_PENDIENTES.md` y continuar desde el último estado conocido.
 
-Los documentos de `archivos_historicos/` **no son fuente de verdad**: explican el pasado y pueden citar rutas antiguas.
+El historial de cambios de `memoria.md` (§11) **no es fuente de verdad** para el código actual: explica el pasado y puede citar rutas o cifras antiguas.
 
 ## Reglas duras (resumen; el detalle está en `instrucciones/`)
 
@@ -47,4 +47,4 @@ Los documentos de `archivos_historicos/` **no son fuente de verdad**: explican e
 - Despliegue: cada instalación crea su propio Worker, D1 y cola (ver `docs/PUESTA_EN_MARCHA.md`). La URL y los IDs van en `wrangler.jsonc` o en `wrangler.local.jsonc` (fuera de Git); el repositorio no guarda datos de ninguna cuenta real.
 - Cambios locales sin commit ni deploy (2026-10-26): paso de peluquero en el bot, servicios activables, bloque «Próximas citas», idempotencia por `wamid`, filtro de agenda por peluquero, retirada del botón manual, corrección de CSP/huecos/alta de peluquero, estado `done`, modernización visual. `npm run check` limpio tras todos los cambios.
 - `npm run e2e` re-ejecutado el 2026-10-30: **última ejecución 189/189, 0 fallidas, exit 0** contra `wrangler dev --local` y la D1 local, incluida la **reprogramación desde «Mis citas» (14/14)**. Siguen corregidos los 4 fallos de la Fase 2 (cancelación desde «Mis citas», ingresos 80 €, navegación de `/admin`, mensaje de horarios) y pasa el resto de la suite. Para llegar al verde se corrigieron **dos defectos del propio test**, no del Worker: el selector `name="service_id">` → `name="service_id"[^>]*>` y el conteo de tarjetas `split('<article class="appt-card">').slice(1)` (el separador sin `>` casaba con la plantilla JS del refresco y el primer trozo incluía la fila de tabla). Ver `memoria.md` §8, §9 y §11.
-- Documentación reorganizada el 2026-10-29: guías en `docs/`, histórico en `archivos_historicos/`. No se borró nada. Ver `memoria.md` §6 y §11.
+- Documentación organizada el 2026-10-29: guías en `docs/`, reglas de trabajo en `instrucciones/` e historial cronológico en `memoria.md` §11.

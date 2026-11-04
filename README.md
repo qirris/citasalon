@@ -94,7 +94,7 @@ npm run backup  # exporta una copia de la D1 de producción a backups/backup.sql
 
 `test/e2e.mjs` es la especificación real del panel: cubre el bot, login y roles, agenda, CRUD completo, conflictos de horario, validaciones, ajustes, horarios y vacaciones por peluquero, servicios, historial, informes (ingresos y CSV), CSP, bloqueo de login y rate-limit por sesión e IP.
 
-Estado de las pruebas (honesto):
+Estado de las pruebas:
 
 - `npm run check`: limpio tras los últimos cambios locales (2026-10-26).
 - Último resultado de `npm run e2e`: **189/189, 0 fallidas, exit 0 (2026-10-30)**, contra `wrangler dev --local` y la D1 local, incluida la reprogramación desde «Mis citas» (14/14).
@@ -133,15 +133,15 @@ Para activarlo hacen falta tres secretos de repositorio (`Settings → Secrets a
 
 ---
 
-## Sistema de memoria del proyecto
+## Notas de desarrollo
 
-Este proyecto usa el documentación interna del proyecto:
+El proyecto mantiene documentación interna para conservar el contexto entre sesiones:
 
-- **`memoria.md`** — memoria viva: estado, decisiones, pruebas verificadas, pendientes e historial. Se actualiza tras cada avance importante.
-- **`AGENTS.md`** — punto de entrada: orden de lectura obligatoria y reglas duras.
+- **`memoria.md`** — estado, decisiones, pruebas verificadas, pendientes e historial. Se actualiza tras cada avance importante.
+- **`AGENTS.md`** — punto de entrada: orden de lectura y reglas de trabajo.
 - **`instrucciones/`** — reglas permanentes por tema: arquitectura, normas de código, seguridad, pruebas, decisiones y tareas pendientes.
 
-Al trabajar en el proyecto, se leen `memoria.md` y `AGENTS.md` antes de tocar nada y documenta los cambios al terminar cada tarea. Los secretos nunca se guardan en estos archivos.
+Los secretos nunca se guardan en estos archivos.
 
 ---
 

@@ -11,7 +11,6 @@ Antes de tocar nada:
 3. Consultar los documentos relacionados con la tarea:
    - **Reglas** (`instrucciones/`): `ARQUITECTURA.md`, `NORMAS_DE_CODIGO.md`, `SEGURIDAD.md`, `PRUEBAS.md`, `DECISIONES.md`, `TAREAS_PENDIENTES.md`.
    - **Guías** (`docs/`): `INDICE_DOCUMENTACION.md`, `PUESTA_EN_MARCHA.md`, `CONFIGURACION_PELUQUERIA_REAL.md`, `AUDITORIA_TEXTOS_FIJOS.md`, `RUTAS_Y_API.md`, `MODELO_DE_DATOS.md`, `OPERACION_Y_DESPLIEGUE.md`.
-   - **Histórico** (`archivos_historicos/`): solo para contexto; **no es fuente de verdad** y puede citar rutas antiguas.
 4. Contrastar la memoria con el código real (si difieren, manda el código y actualizar la memoria).
 5. Continuar desde el último estado conocido; no rehacer trabajo terminado.
 
@@ -39,5 +38,5 @@ Antes de tocar nada:
 
 - `memoria.md`: memoria viva del proyecto (única fuente de estado).
 - `instrucciones/*.md`: reglas permanentes organizadas por tema. No duplicar contenido; enlazar.
-- `AGENTS.md`: mapa de entrada del proyecto; no meter en él detalles que ya estén en la memoria.
+- `AGENTS.md`: mapa de entrada del proyecto; resume el orden de lectura y las reglas principales. No meter en él detalles que ya estén en la memoria.
 - Si el usuario da una instrucción permanente, guardarla en el documento correspondiente en el momento.
