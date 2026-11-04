@@ -1,32 +1,38 @@
 {
+  // Nombre del Worker en TU cuenta de Cloudflare (no lo compartas ni copies el de otro proyecto).
+  // `setup.ps1` lo pide y lo escribe aquí automáticamente.
   "name": "citasalon",
   "main": "src/index.ts",
   "compatibility_date": "2025-09-01",
 
-  // Datos no secretos. Los secretos (token de WhatsApp, contraseñas...) se guardan aparte
-  // con "wrangler secret" y NUNCA se escriben aquí. Ver README.
+  // Datos NO secretos de la instalación. Los secretos (token de WhatsApp, contraseñas
+  // de los paneles, APP_SECRET...) se guardan aparte con "wrangler secret put" y NUNCA
+  // se escriben en este archivo ni en Git. Ver README > Variables de entorno.
   "vars": {
     "DEBUG": "false",
-    "SALON_NAME": "Peluqueria Ejemplo",
+
+    // --- Datos del salón (se pueden cambiar luego desde /admin/ajustes) ---
+    "SALON_NAME": "Peluquería Ejemplo",
     "SALON_ADDRESS": "Calle Ejemplo 1",
     "SALON_PHONE": "600 000 000",
     "SALON_TZ": "Europe/Madrid",
-    "WHATSAPP_PHONE_ID": "<PHONE_NUMBER_ID>",
-    "WHATSAPP_NUMBER": "<NUMERO_DE_PRUEBA>",
+
+    // --- WhatsApp Cloud API (Meta) ---
+    // WHATSAPP_PHONE_ID es el ID del número (no es el teléfono visible).
+    // Se obtiene en Meta for Developers > tu app > WhatsApp > API Setup.
+    "WHATSAPP_PHONE_ID": "0000000000000000",
+    // Número visible en formato internacional, sin "+" ni espacios (ej.: 34600111222).
+    "WHATSAPP_NUMBER": "34600111222",
     "GRAPH_VERSION": "v25.0",
+
+    // --- Plantillas de mensaje aprobadas en Meta ---
+    // El código envía el NOMBRE de la plantilla, no su ID. Deja vacío lo que no uses.
     "REMINDER_TEMPLATE": "",
     "REMINDER_TEMPLATE_LANG": "es",
     "CANCEL_TEMPLATE": "aviso_cita_cancelada",
-    // Plantilla aprobada en Meta. ID: <ID_PLANTILLA_CANCELACION> (referencia documental;
-    // sendTemplate envía el nombre, no el ID).
     "CANCEL_TEMPLATE_LANG": "es_ES",
     "UPDATE_TEMPLATE": "aviso_cita_actualizada",
-    // Plantilla aprobada en Meta. ID: <ID_PLANTILLA_ACTUALIZACION> (referencia documental;
-    // sendTemplate envía el nombre, no el ID).
     "UPDATE_TEMPLATE_LANG": "es_ES",
-    // Confirmación de reserva creada desde un panel. Integrada el 2026-11-01.
-    // Plantilla aprobada en Meta: confirmacion_reserva_peluqueria (es_ES), ID: <ID_PLANTILLA_CONFIRMACION>.
-    // Body con 4 parámetros: servicio, fecha, hora, peluquero.
     "CREATE_TEMPLATE": "confirmacion_reserva_peluqueria",
     "CREATE_TEMPLATE_LANG": "es_ES"
   },
@@ -34,14 +40,17 @@
   "d1_databases": [
     {
       "binding": "DB",
+      // Nombre de la base D1 de ESTA instalación. Cada salón usa la suya.
       "database_name": "citasalon",
-      "database_id": "<DATABASE_ID>"
+      // Lo devuelve "npx wrangler d1 create citasalon". No es un secreto, pero es
+      // propio de cada cuenta: no reutilices el de otro proyecto.
+      "database_id": "00000000-0000-0000-0000-000000000000"
     }
   ],
 
-  // Cola de WhatsApp (Fase 2). Wrangler la simula en local sin crear nada en Cloudflare.
-  // En remoto debe existir antes de desplegar:  wrangler queues create whatsapp-inbox
-  // Una cola por instalación (no compartirla entre peluquerías). `setup.ps1` la crea y
+  // Cola de WhatsApp. Wrangler la simula en local sin crear nada en Cloudflare.
+  // En remoto debe existir antes de desplegar:  npx wrangler queues create whatsapp-inbox
+  // Una cola por instalación (no compartirla entre salones). `setup.ps1` la crea y
   // actualiza este nombre. El Inbox de D1 es la fuente de verdad: si la cola falla o no
   // existe, el webhook drena en el acto y el cron recupera lo que quede.
   "queues": {

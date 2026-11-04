@@ -15,7 +15,6 @@ Punto de partida para saber **qué documento leer** y **cuál manda** cuando hay
 | Saber qué se puede personalizar y qué es texto fijo | `AUDITORIA_TEXTOS_FIJOS.md` |
 | Operar, desplegar, hacer copias y diagnosticar | `OPERACION_Y_DESPLIEGUE.md` |
 | Saber qué queda pendiente | `../instrucciones/TAREAS_PENDIENTES.md` |
-| Consultar historia (no vigente) | `../archivos_historicos/README.md` |
 
 ## Documentos de esta carpeta (`docs/`)
 

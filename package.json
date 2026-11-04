@@ -1,6 +1,7 @@
 {
   "name": "citasalon",
   "version": "1.0.0",
+  "description": "CitaSalón — Gestión de citas por WhatsApp para salones de peluquería (Cloudflare Workers + D1)",
   "private": true,
   "type": "module",
   "engines": {

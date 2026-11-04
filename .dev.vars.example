@@ -1,8 +1,9 @@
 # Copia este archivo como ".dev.vars" para probar en tu ordenador (npm run dev).
-# Son secretos de PRUEBA. Los de verdad se guardan en Cloudflare con setup.ps1.
+# Son secretos de PRUEBA, solo para local. Los de verdad se guardan en Cloudflare
+# con "npx wrangler secret put" o con setup.ps1, y NUNCA se suben al repositorio.
 VERIFY_TOKEN=test-verify-token
-APP_SECRET=topsecret
-ADMIN_PASSWORD=admin-pass-1
-STAFF_PASSWORD=staff-pass-1
+APP_SECRET=test-app-secret
+ADMIN_PASSWORD=cambia-esta-clave-admin
+STAFF_PASSWORD=cambia-esta-clave-staff
 SESSION_SECRET=0123456789abcdef0123456789abcdef
 # WHATSAPP_TOKEN=   (sin token, el bot escribe las respuestas en la consola en vez de enviarlas)

@@ -1,6 +1,6 @@
-# AGENTS.md — Peluquería Cloudflare (bot WhatsApp + paneles)
+# AGENTS.md — CitaSalón (bot WhatsApp + paneles)
 
-Proyecto en `C:\Users\<usuario>\Documents\NEGOCIOS\bot-funciona\citasalon` (si trabajas desde otro directorio, ve a esta carpeta: es la raíz real del proyecto). El directorio padre es solo un contenedor.
+Proyecto en la carpeta que contiene este archivo (es la raíz real del proyecto). El directorio padre es solo un contenedor.
 
 Bot de reservas de peluquería por WhatsApp + paneles `/admin`, `/recepcion` y cartel `/qr`, en Cloudflare Worker con D1. TODO en español.
 
@@ -37,14 +37,14 @@ Los documentos de `archivos_historicos/` **no son fuente de verdad**: explican e
 - NO guardar secretos, contraseñas ni tokens en ningún `.md`.
 - Arquitectura actual: **una peluquería = un Worker + una D1 + secretos propios**. No hay multi-tenant; no compartir una D1 entre salones.
 - NO inventar pruebas ni resultados; NO marcar terminado algo no verificado.
-- WhatsApp en producción está DESACTIVADO a petición del usuario: no poner `WHATSAPP_TOKEN`/`APP_SECRET` ni configurar el webhook en Meta hasta que lo pida.
+- WhatsApp en producción está DESACTIVADO: no poner `WHATSAPP_TOKEN`/`APP_SECRET` ni configurar el webhook en Meta sin que se pida expresamente. Los secretos nunca van al repositorio.
 - Actualizar `memoria.md` tras cada avance importante (y antes de dar una tarea por terminada).
 - Instrucciones permanentes nuevas del usuario: guardarlas en el `.md` correspondiente de `instrucciones/` en el momento.
 - No tocar `.dev.vars`, `.wrangler/`, `node_modules/`, `backups/`, `.git/`, bases de datos locales ni secretos. No hacer commit, push ni deploy sin que el usuario lo pida.
 
 ## Estado rápido
 
-- Producción: `https://<tu-worker>.workers.dev` (worker + D1 desplegados 2026-10-19; sin `WHATSAPP_TOKEN` ni `APP_SECRET` en el Worker remoto).
+- Despliegue: cada instalación crea su propio Worker, D1 y cola (ver `docs/PUESTA_EN_MARCHA.md`). La URL y los IDs van en `wrangler.jsonc` o en `wrangler.local.jsonc` (fuera de Git); el repositorio no guarda datos de ninguna cuenta real.
 - Cambios locales sin commit ni deploy (2026-10-26): paso de peluquero en el bot, servicios activables, bloque «Próximas citas», idempotencia por `wamid`, filtro de agenda por peluquero, retirada del botón manual, corrección de CSP/huecos/alta de peluquero, estado `done`, modernización visual. `npm run check` limpio tras todos los cambios.
 - `npm run e2e` re-ejecutado el 2026-10-30: **última ejecución 189/189, 0 fallidas, exit 0** contra `wrangler dev --local` y la D1 local, incluida la **reprogramación desde «Mis citas» (14/14)**. Siguen corregidos los 4 fallos de la Fase 2 (cancelación desde «Mis citas», ingresos 80 €, navegación de `/admin`, mensaje de horarios) y pasa el resto de la suite. Para llegar al verde se corrigieron **dos defectos del propio test**, no del Worker: el selector `name="service_id">` → `name="service_id"[^>]*>` y el conteo de tarjetas `split('<article class="appt-card">').slice(1)` (el separador sin `>` casaba con la plantilla JS del refresco y el primer trozo incluía la fila de tabla). Ver `memoria.md` §8, §9 y §11.
 - Documentación reorganizada el 2026-10-29: guías en `docs/`, histórico en `archivos_historicos/`. No se borró nada. Ver `memoria.md` §6 y §11.

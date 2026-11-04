@@ -85,8 +85,8 @@ está en marcha (paso 7):
 
 ## 3. Base de datos D1
 
-### Si es la cuenta/worker ya existente (este proyecto)
-La D1 `citasalon` ya existe. Solo asegúrate del esquema:
+### Si la D1 ya existe en tu cuenta
+Solo asegúrate de que el esquema está aplicado (sustituye `citasalon` por el nombre real de tu base):
 
 ```powershell
 npx wrangler d1 execute citasalon --remote --file=schema.sql

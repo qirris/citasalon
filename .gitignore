@@ -6,3 +6,6 @@ backups/
 dev-server.pid
 dev-server.log
 dev-err.log
+
+# Configuración real de la instalación (IDs de Cloudflare). No se sube.
+wrangler.local.jsonc

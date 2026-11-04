@@ -1,6 +1,8 @@
-# Bot de citas por WhatsApp — citasalon
+# CitaSalón — Gestión de citas por WhatsApp para salones
 
-Bot que permite a los clientes reservar, consultar, reprogramar y cancelar citas desde WhatsApp. Corre en Cloudflare Workers sin servidor propio, con base de datos D1 y paneles web de administración y recepción.
+Sistema completo para que los clientes de una peluquería reserven, consulten, reprogramen y cancelen sus citas desde WhatsApp, con paneles web de administración y recepción. Corre en Cloudflare Workers sin servidor propio, con base de datos D1, cola de mensajes y copias de seguridad cifradas.
+
+**Stack:** TypeScript · Cloudflare Workers · D1 (SQLite) · Queues · WhatsApp Cloud API (Meta) · HTML server-side · GitHub Actions · PowerShell.
 
 ```
 Cliente ──WhatsApp──► Meta ──webhook──► Cloudflare Worker ──► D1 (citas)
@@ -116,7 +118,6 @@ Estado de las pruebas (honesto):
 | `docs/RUTAS_Y_API.md` | Rutas, permisos y endpoints JSON. |
 | `docs/MODELO_DE_DATOS.md` | Tablas, estados, retención y valores por defecto. |
 | `docs/OPERACION_Y_DESPLIEGUE.md` | Comandos, despliegue, backups y diagnóstico. |
-| `archivos_historicos/README.md` | Qué hay en el histórico y por qué no es fuente de verdad. |
 
 En `datos-salon/` hay plantillas listas para rellenar (tipo de peluquería, nombre/dirección/teléfono, peluqueros con horarios y vacaciones, y servicios con duración y precio). Los datos se copian luego en *Ajustes* del panel.
 
@@ -184,11 +185,9 @@ O haz doble clic en `instalar.bat` para el proceso guiado completo.
 
 > Un Worker nuevo con una D1 vacía necesita que se aplique `schema.sql`; el despliegue no lo hace solo. Ver `docs/PUESTA_EN_MARCHA.md` §3.
 
-## Estado de producción
+## Estado del proyecto
 
-Según `memoria.md` §2:
-
-- URL: `https://<tu-worker>.workers.dev`.
-- Worker desplegado el **2026-11-03** (commit `5910b1c`, versión `<VERSION_DEPLOYADA>`), sobre la D1 creada el 2026-10-19.
-- Verificado en producción: `/health`, `/manifest.json`, iconos 192×192/512×512, `/qr-recepcion`, `/qr`, `/recepcion` y `/admin` responden 200; la D1 conserva sus datos y no se ejecutaron migraciones.
-- WhatsApp: los secretos `WHATSAPP_TOKEN` y `APP_SECRET` existen en el Worker, pero **no se ha verificado una entrega real** ni los acuses de Meta.
+- El sistema está completo y probado; el detalle de la última verificación está en `memoria.md` §2 y §8.
+- Cada instalación usa **su propio** Worker, D1 y cola. La URL, el `database_id` y el Phone ID van en `wrangler.jsonc`, o en `wrangler.local.jsonc` (fuera de Git) si no quieres publicarlos.
+- Este repositorio **no contiene** datos de ninguna cuenta real de Cloudflare, ni teléfonos, ni tokens, ni contraseñas.
+- Para desplegarlo en tu cuenta: `docs/PUESTA_EN_MARCHA.md` o `instalar.bat` / `setup.ps1`.

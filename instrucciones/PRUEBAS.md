@@ -16,7 +16,7 @@ npm run e2e     # limpia las tablas de la D1 local y ejecuta test/e2e.mjs (requi
 
 Notas:
 - El e2e borra las tablas locales al empezar (no usa la BD de producción).
-- El e2e usa los mismos secretos que `.dev.vars` (contraseñas `admin-pass-1` y `staff-pass-1`).
+- El e2e usa los mismos secretos que `.dev.vars` (las contraseñas de panel que hayas puesto allí).
 - Cada mensaje al bot espera 350 ms; la prueba tarda ~1-2 min.
 
 ## Qué cubre el e2e
