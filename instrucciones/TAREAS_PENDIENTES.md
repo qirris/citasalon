@@ -1,8 +1,8 @@
 # Tareas pendientes
 
-Estado: núcleo funcional y verificado. El repositorio se ha preparado como pieza de portfolio **privada** (2026-11-04): renombrado a **CitaSalón** (`citasalon`), sin identificadores de Cloudflare ni de Meta en los archivos versionados y con la configuración real de la instalación en `wrangler.local.jsonc` (fuera de Git). La personalización de una peluquería real está **aplazada** hasta tener cliente y datos.
+Estado: núcleo funcional y verificado. El repositorio se ha preparado como pieza de portfolio **privada** (2026-11-04): renombrado a **CitaSalón** (`citasalon`), sin identificadores de Cloudflare ni de Meta en el historial ni en los archivos versionados y con la configuración real de la instalación en `wrangler.local.jsonc` (fuera de Git). La personalización de una peluquería real está **aplazada** hasta tener cliente y datos.
 
-Última revisión: **2026-11-04** (sanitización y renombrado a CitaSalón; `npm run check` limpio y **95/95 pruebas en verde**). El e2e sigue en **189/189, exit 0** del 2026-10-30, no re-ejecutado.
+Última revisión: **2026-11-04** (sanitización, renombrado a CitaSalón y limpieza del historial; `npm run check` limpio y **95/95 pruebas en verde**). El e2e sigue en **189/189, exit 0** del 2026-10-30, no re-ejecutado.
 
 Criterio: no marcar `[x]` sin haberlo hecho y verificado. Las tareas de personalización no son «pendientes de código»: dependen de datos y decisiones del propietario.
 
@@ -19,11 +19,11 @@ Criterio: no marcar `[x]` sin haberlo hecho y verificado. Las tareas de personal
 - [x] **Restauración Segura en Sandbox de D1**: Implementado módulo `src/restore-sandbox.ts` y pruebas unitarias (`test/restore-sandbox.test.mjs`) para validar volcado cifrado y ejecutarlo en una base SQLite temporal de pruebas aislada.
 - [x] **Validador de Instalación de Salón**: Creado `src/salon-validator.ts` y `test/salon-validator.test.mjs` para validar la integridad de la configuración comercial y técnica previa al despliegue.
 - [x] **Suite Total de Pruebas**: 95/95 pruebas (`npm test` 51/51 + `test:aux` 44/44), incluyendo cifrado/descifrado real del workflow, manipulación de ciphertext/authTag/IV/checksum, migraciones con datos e instalación con nombres propios.
-- [x] **Commit, push y deploy** de los cambios posteriores a `8c4bee4`. **Hecho el 2026-11-03:** commit `5910b1c` en `origin/master`, CI en verde y `wrangler deploy` correcto (versión `<VERSION_DEPLOYADA>`). Verificadas en producción `/health`, `/manifest.json`, iconos 192/512, `/qr-recepcion`, `/qr`, `/recepcion` y `/admin` (200).
+- [x] **Commit, push y deploy** de los cambios posteriores a `c1b20de`. **Hecho el 2026-11-03:** commit `e2c63a4` en `origin/master`, CI en verde y `wrangler deploy` correcto (versión `<VERSION_DEPLOYADA>`). Verificadas en producción `/health`, `/manifest.json`, iconos 192/512, `/qr-recepcion`, `/qr`, `/recepcion` y `/admin` (200).
 - [x] **Demostración en local**: `npm run dev` en `http://127.0.0.1:8787` y `schema.sql` aplicado a la D1 local (sin migraciones ni cambios remotos). Verificadas 200 en `/health`, `/manifest.json`, `/qr`, `/qr-recepcion`, `/recepcion` y `/admin`. La D1 local queda sin citas (0), con los valores por defecto de `wrangler.jsonc`.
 - [ ] **Datos de demostración (opcional)**: si se quiere enseñar la agenda con citas, crear 2–3 citas de ejemplo en la D1 **local** (nunca en producción) o cargarlas desde `/admin`.
 - [x] **Sanitizar el repositorio para portfolio (2026-11-04)**: sustituidos por marcadores la URL del Worker, `database_id`, Phone ID/WABA/App ID, IDs de plantillas, números de prueba, túneles y credenciales de prueba; renombrado a CitaSalón y configuración real movida a `wrangler.local.jsonc` (ignorado por Git). Verificado con `npm run check` y 95/95 pruebas.
-- [ ] **Limpiar el historial de Git** (los commits anteriores al 2026-11-04 aún contienen la URL del Worker, el `database_id` y el Phone ID antiguos). Requiere decisión explícita: reescribir con `git filter-repo` o crear un repositorio nuevo con un único commit limpio.
+- [x] ~~**Limpiar el historial de Git**~~ **Hecho el 2026-11-04:** reescrito con `git filter-repo` y backup mirror previo; eliminados de todos los commits la URL del Worker, `database_id`, Phone ID/WABA/App ID, IDs de plantillas, número de prueba, túneles, cuenta de Cloudflare, credenciales de prueba y rutas locales. Verificado con `git log -S`.
 - [ ] **Confirmar la entrega real por Meta** (webhook firmado y envío real). Las pruebas del 2026-10-26 usaron webhook firmado y, en parte, `[modo consola]`; no se envió nada a la API de Meta desde el entorno aislado.
 - [ ] **Ejercitar la pausa del refresco con pestaña oculta** en un navegador real (`document.hidden`). En headless la pestaña siempre está visible.
 
