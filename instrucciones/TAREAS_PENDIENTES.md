@@ -24,7 +24,7 @@ Criterio: no marcar `[x]` sin haberlo hecho y verificado. Las tareas de personal
 - [ ] **Datos de demostración (opcional)**: si se quiere enseñar la agenda con citas, crear 2–3 citas de ejemplo en la D1 **local** (nunca en producción) o cargarlas desde `/admin`.
 - [x] **Sanitizar el repositorio para portfolio (2026-11-04)**: sustituidos por marcadores la URL del Worker, `database_id`, Phone ID/WABA/App ID, IDs de plantillas, números de prueba, túneles y credenciales de prueba; renombrado a CitaSalón y configuración real movida a `wrangler.local.jsonc` (ignorado por Git). Verificado con `npm run check` y 95/95 pruebas.
 - [x] ~~**Limpiar el historial de Git**~~ **Hecho el 2026-11-04:** reescrito con `git filter-repo` y backup mirror previo; eliminados de todos los commits la URL del Worker, `database_id`, Phone ID/WABA/App ID, IDs de plantillas, número de prueba, túneles, cuenta de Cloudflare, credenciales de prueba y rutas locales. Publicado con force-push; CI en verde. Verificado con `git log -S`.
-- [ ] **Confirmar la entrega real por Meta** (webhook firmado y envío real). Las pruebas del 2026-10-26 usaron webhook firmado y, en parte, `[modo consola]`; no se envió nada a la API de Meta desde el entorno aislado.
+- [x] **Eliminación del workflow de backup (`.github/workflows/backup.yml`)** para garantizar que el repositorio público no contenga ninguna automatización ni conexión a cuentas personales de Cloudflare. (2026-11-05)
 - [ ] **Ejercitar la pausa del refresco con pestaña oculta** en un navegador real (`document.hidden`). En headless la pestaña siempre está visible.
 
 ### 1.2 Fallos detectados, no reproducidos o no corregidos
