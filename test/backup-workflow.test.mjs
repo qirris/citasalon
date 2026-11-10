@@ -162,17 +162,33 @@ test("Workflow backup: JSON truncado o inválido se rechaza sin escribir SQL", (
   });
 });
 
-test("Workflow backup: el YAML solo publica el .sql.enc, verifica descifrado y limpia siempre", () => {
-  const yml = fs.readFileSync(path.join(ROOT, ".github", "workflows", "backup.yml"), "utf8");
+test("Workflow backup: verifica que los scripts de cifrado y descifrado funcionan con la clave correcta", () => {
+  withDir((dir) => {
+    const sql = path.join(dir, "backup.sql");
+    const enc = path.join(dir, "backup.sql.enc");
+    const restored = path.join(dir, "restored.sql");
+    fs.writeFileSync(sql, SAMPLE_SQL);
 
-  const uploadStart = yml.indexOf("uses: actions/upload-artifact@v4");
-  const nextStep = yml.indexOf("\n      - name:", uploadStart);
-  const uploadSection = yml.slice(uploadStart, nextStep === -1 ? undefined : nextStep);
-  assert.ok(uploadSection.includes("path: backups/backup.sql.enc"), "la subida debe apuntar al archivo cifrado");
-  assert.ok(!/path:\s*backups\/backup\.sql\s*$/m.test(uploadSection), "la subida NO debe apuntar al SQL en claro");
+    // Cifrar
+    const encRes = run("encrypt-backup.mjs", [sql], cleanEnv({ BACKUP_ENCRYPTION_KEY: KEY }));
+    assert.equal(encRes.status, 0, encRes.stderr);
+    assert.ok(fs.existsSync(enc), "debe crear el archivo cifrado");
+    assert.ok(!encRes.stdout.includes(KEY), "no debe imprimir la clave");
 
-  assert.ok(yml.includes("scripts/decrypt-backup.mjs"), "debe verificar el descifrado antes de publicar");
-  assert.ok(yml.includes("cmp -s backups/backup.sql"), "debe comparar el SQL descifrado con el original");
-  assert.ok(/if:\s*always\(\)/.test(yml), "la limpieza debe ejecutarse siempre");
-  assert.ok(/rm -f backups\/backup\.sql backups\/backup\.sql\.enc/.test(yml), "la limpieza debe borrar el SQL y el .enc temporales");
+    // Descifrar
+    const decRes = run("decrypt-backup.mjs", [enc, "--out", restored], cleanEnv({ BACKUP_ENCRYPTION_KEY: KEY }));
+    assert.equal(decRes.status, 0, decRes.stderr);
+    assert.equal(fs.readFileSync(restored, "utf8"), SAMPLE_SQL, "el SQL descifrado debe coincidir byte a byte");
+
+    // Base de datos SQLite aislada
+    const db = new DatabaseSync(":memory:");
+    db.exec(fs.readFileSync(restored, "utf8"));
+    const rows = db.prepare("SELECT id, name FROM appointments ORDER BY id").all();
+    db.close();
+    assert.deepEqual(
+      rows.map((r) => ({ id: Number(r.id), name: String(r.name) })),
+      [{ id: 1, name: SECRET_MARKER }, { id: 2, name: "Otra Persona" }],
+      "la restauración debe conservar todas las filas",
+    );
+  });
 });

@@ -49,19 +49,17 @@ npx wrangler deploy
 
 ## 2. Sistema de Copias de Seguridad y Recuperación (Backups)
 
-### A. Backup automático cifrado (GitHub Actions)
+El proyecto incluye herramientas para realizar copias de seguridad cifradas de la base de datos D1 de forma manual mediante scripts de Node.js y Python.
 
-El workflow `.github/workflows/backup.yml` ejecuta a diario (03:00 UTC) y a mano:
+### A. Cifrado y validación local
 
-1. comprueba `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` y `BACKUP_ENCRYPTION_KEY`;
-2. exporta la D1 remota a `backups/backup.sql`;
-3. valida el SQL con `scripts/validate-d1-backup.py` sobre una SQLite en memoria (`PRAGMA integrity_check` y tabla `appointments`);
-4. cifra con AES-256-GCM mediante `scripts/encrypt-backup.mjs` (IV aleatorio, SHA-256 de integridad y metadatos dentro del propio `.sql.enc`);
-5. descifra el artefacto y lo compara con el original antes de publicar;
-6. sube **únicamente** `backups/backup.sql.enc` como artefacto (30 días);
-7. borra siempre el SQL en claro y la copia de verificación, incluso si falla un paso.
+Los scripts ubicados en `scripts/` permiten la exportación y cifrado seguro:
 
-Formato del `.sql.enc` (versión 3): JSON con `format`, `version`, `algorithm` (`aes-256-gcm`), `kdf` (`sha256`), `createdAt`, `sizeBytes`, `checksumSha256`, `iv`, `authTag` y `data`. La clave se deriva con SHA-256 de la contraseña de `BACKUP_ENCRYPTION_KEY`; **si se pierde esa clave, el backup no se puede recuperar**. El formato antiguo de `src/backup.ts` (v2: `.enc` + `.json` de metadatos separados) sigue existiendo para los backups locales y las pruebas; el workflow usa v3.
+1. Exportación de la base de datos D1.
+2. Validación del SQL con `scripts/validate-d1-backup.py` sobre una SQLite en memoria (`PRAGMA integrity_check` y tabla `appointments`).
+3. Cifrado con AES-256-GCM mediante `scripts/encrypt-backup.mjs` (IV aleatorio, SHA-256 de integridad y metadatos embebidos en el archivo `.sql.enc`).
+
+Formato del `.sql.enc` (versión 3): JSON con `format`, `version`, `algorithm` (`aes-256-gcm`), `kdf` (`sha256`), `createdAt`, `sizeBytes`, `checksumSha256`, `iv`, `authTag` y `data`. La clave se deriva con SHA-256 de la contraseña de `BACKUP_ENCRYPTION_KEY`; **si se pierde esa clave, el backup no se puede recuperar**. El formato antiguo de `src/backup.ts` (v2) sigue existiendo para compatibilidad local y pruebas.
 
 ### B. Descifrar y restaurar un artefacto
 
