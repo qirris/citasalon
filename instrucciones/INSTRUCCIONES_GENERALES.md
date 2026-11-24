@@ -40,3 +40,7 @@ Antes de tocar nada:
 - `instrucciones/*.md`: reglas permanentes organizadas por tema. No duplicar contenido; enlazar.
 - `AGENTS.md`: mapa de entrada del proyecto; resume el orden de lectura y las reglas principales. No meter en él detalles que ya estén en la memoria.
 - Si el usuario da una instrucción permanente, guardarla en el documento correspondiente en el momento.
+
+## Presentación del proyecto (2026-11-24)
+
+- Para el README y el portfolio, el propietario quiere capturas reales de cómo se ve la aplicación. Utilizar la interfaz ejecutada en navegador con datos ficticios y documentar su procedencia; no sustituirla por imágenes generadas por IA ni mockups inventados.

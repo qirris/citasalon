@@ -1,6 +1,8 @@
 # Tareas pendientes
 
-Estado: núcleo funcional y verificado. El repositorio se ha preparado como pieza de portfolio **privada** (2026-11-04): renombrado a **CitaSalón** (`citasalon`), sin identificadores de Cloudflare ni de Meta en el historial ni en los archivos versionados y con la configuración real de la instalación en `wrangler.local.jsonc` (fuera de Git). La personalización de una peluquería real está **aplazada** hasta tener cliente y datos.
+Estado: núcleo funcional y verificado. El repositorio se preparó como pieza de portfolio privada (2026-11-04) y el propietario lo hizo **público el 2026-11-24**, confirmado mediante GitHub. Se conserva el nombre **CitaSalón** (`citasalon`), sin identificadores de Cloudflare ni de Meta en el historial ni en los archivos versionados y con la configuración real de la instalación en `wrangler.local.jsonc` (fuera de Git). La personalización de una peluquería real está **aplazada** hasta tener cliente y datos.
+
+Presentación (2026-11-24): README reorganizado con cinco capturas reales del código en local y datos ficticios; procedencia en `docs/capturas/README.md`. Esta actualización documental no cambia las verificaciones funcionales históricas indicadas a continuación.
 
 Última revisión: **2026-11-04** (sanitización, renombrado a CitaSalón y limpieza del historial; `npm run check` limpio y **95/95 pruebas en verde**). El e2e sigue en **189/189, exit 0** del 2026-10-30, no re-ejecutado.
 
