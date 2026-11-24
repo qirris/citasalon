@@ -85,9 +85,9 @@ Capturas reales de pruebas anteriores proporcionadas por el autor, con los telé
     <th>3. Recibir la confirmación</th>
   </tr>
   <tr>
-    <td valign="top" align="center"><a href="docs/capturas/whatsapp-inicio.jpg"><img src="docs/capturas/whatsapp-inicio.jpg" width="230" alt="WhatsApp real: menú del bot, Reservar cita y selección de un servicio; teléfonos ocultos"></a></td>
-    <td valign="top" align="center"><a href="docs/capturas/whatsapp-horas.jpg"><img src="docs/capturas/whatsapp-horas.jpg" width="230" alt="WhatsApp real: lista de horas disponibles para seleccionar"></a></td>
-    <td valign="top" align="center"><a href="docs/capturas/whatsapp-confirmacion.jpg"><img src="docs/capturas/whatsapp-confirmacion.jpg" width="230" alt="WhatsApp real: cita confirmada con servicio, fecha, hora y ubicación; nombre del cliente oculto"></a></td>
+    <td width="262" valign="top" align="center"><a href="docs/capturas/whatsapp-inicio.jpg"><img src="docs/capturas/whatsapp-inicio.jpg" width="230" alt="WhatsApp real: menú del bot, Reservar cita y selección de un servicio; teléfonos ocultos"></a></td>
+    <td width="262" valign="top" align="center"><a href="docs/capturas/whatsapp-horas.jpg"><img src="docs/capturas/whatsapp-horas.jpg" width="230" alt="WhatsApp real: lista de horas disponibles para seleccionar"></a></td>
+    <td width="262" valign="top" align="center"><a href="docs/capturas/whatsapp-confirmacion.jpg"><img src="docs/capturas/whatsapp-confirmacion.jpg" width="230" alt="WhatsApp real: cita confirmada con servicio, fecha, hora y ubicación; nombre del cliente oculto"></a></td>
   </tr>
   <tr>
     <td valign="top">El cliente inicia la conversación, pulsa «Reservar cita» y selecciona un servicio.</td>
@@ -106,8 +106,8 @@ La conversación también permite consultar las próximas reservas. Los avisos m
     <th>Avisos automáticos</th>
   </tr>
   <tr>
-    <td valign="top" align="center"><a href="docs/capturas/whatsapp-mis-citas.jpg"><img src="docs/capturas/whatsapp-mis-citas.jpg" width="280" alt="WhatsApp real: consulta de próximas citas y acceso a su gestión"></a></td>
-    <td valign="top" align="center"><a href="docs/capturas/whatsapp-avisos.jpg"><img src="docs/capturas/whatsapp-avisos.jpg" width="280" alt="WhatsApp real: dos avisos recibidos durante las pruebas, uno de cita cancelada y otro de cita actualizada"></a></td>
+    <td width="312" valign="top" align="center"><a href="docs/capturas/whatsapp-mis-citas.jpg"><img src="docs/capturas/whatsapp-mis-citas.jpg" width="280" alt="WhatsApp real: consulta de próximas citas y acceso a su gestión"></a></td>
+    <td width="312" valign="top" align="center"><a href="docs/capturas/whatsapp-avisos.jpg"><img src="docs/capturas/whatsapp-avisos.jpg" width="280" alt="WhatsApp real: dos avisos recibidos durante las pruebas, uno de cita cancelada y otro de cita actualizada"></a></td>
   </tr>
   <tr>
     <td valign="top">Desde «Mis citas», el cliente consulta sus próximas reservas y accede a su gestión.</td>
