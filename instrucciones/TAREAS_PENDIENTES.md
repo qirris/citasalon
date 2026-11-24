@@ -4,6 +4,8 @@ Estado: núcleo funcional y verificado. El repositorio se preparó como pieza de
 
 Presentación (2026-11-24): README reorganizado con cinco capturas reales del código en local y datos ficticios; procedencia en `docs/capturas/README.md`. Esta actualización documental no cambia las verificaciones funcionales históricas indicadas a continuación.
 
+Contexto confirmado por el propietario (2026-11-24): desarrollo asistido con modelos gratuitos mediante OmniRoute, a partir de una necesidad observada en peluquerías cercanas. Pruebas manuales por WhatsApp con amigos y familiares; todavía sin piloto en un salón ni resultados comerciales medidos. El README detalla su aportación y el uso de IA.
+
 Última revisión: **2026-11-04** (sanitización, renombrado a CitaSalón y limpieza del historial; `npm run check` limpio y **95/95 pruebas en verde**). El e2e sigue en **189/189, exit 0** del 2026-10-30, no re-ejecutado.
 
 Criterio: no marcar `[x]` sin haberlo hecho y verificado. Las tareas de personalización no son «pendientes de código»: dependen de datos y decisiones del propietario.
@@ -117,6 +119,9 @@ No son requisitos del núcleo.
 - [ ] Tests unitarios de funciones puras (`cleanName`, `pickTime`, `pickDay`, `normalizePhone`, `freeSlots`).
 - [ ] Accesibilidad formal (teclado, lector de pantalla, contraste AA).
 - [ ] Monitorización, alertas y métricas de negocio.
+- [ ] **Reforzar la fiabilidad antes de un piloto en salón:** continuar las pruebas de respuestas, reservas y cambios de citas; las pruebas con amigos y familiares no equivalen a un piloto operativo.
+- [ ] **Realizar un piloto con una peluquería**, recoger comentarios de uso diario y medir resultados antes de afirmar beneficios comerciales.
+- [ ] **Estudiar continuidad ante una caída de Cloudflare** (prioridad indicada por el propietario el 2026-11-24): evaluar un entorno alternativo y cómo mantener el servicio disponible. No está implementado; las copias de seguridad existentes permiten recuperación de datos, pero no conmutación automática de proveedor.
 - [ ] Runbook de restauración de backups y prueba periódica.
 - [ ] Política de retención/borrado RGPD y minimización en backups.
 - [ ] Service worker / funcionamiento offline para la PWA.

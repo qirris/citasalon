@@ -6,18 +6,58 @@
 
 Bot de citas para peluquerías con paneles de administración y recepción, disponibilidad por profesional y recordatorios.
 
+**Proyecto personal desarrollado con IA mediante OmniRoute, actualmente en fase de pruebas y mejora.**
+
 [![CI](https://github.com/qirris/citasalon/actions/workflows/ci.yml/badge.svg)](https://github.com/qirris/citasalon/actions/workflows/ci.yml)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
 ![Cloudflare Workers](https://img.shields.io/badge/Cloudflare_Workers-F38020?style=flat&logo=cloudflare&logoColor=white)
 ![Node.js 24+](https://img.shields.io/badge/Node.js-24%2B-339933?style=flat&logo=nodedotjs&logoColor=white)
 
-[Capturas](#así-se-ve) · [Funcionalidades](#qué-puedes-hacer) · [Arranque local](#probar-en-local) · [Arquitectura](#cómo-funciona) · [Documentación](#documentación)
+[Historia](#por-qué-creé-citasalón) · [Mi aportación e IA](#mi-aportación-y-uso-de-ia) · [Estado](#estado-actual-y-próximos-pasos) · [Capturas](#así-se-ve) · [Arranque local](#probar-en-local) · [Arquitectura](#cómo-funciona) · [Documentación](#documentación)
 
 </div>
 
 ![Agenda real de CitaSalón en escritorio: citas, filtros por peluquero, estados y próximas reservas](docs/capturas/agenda-escritorio.jpg)
 
 <p align="center"><sub>Captura real de la aplicación en local. Todos los nombres y las citas son ficticios.</sub></p>
+
+## Por qué creé CitaSalón
+
+La idea surgió hablando con un amigo peluquero que gestionaba sus citas por WhatsApp. Entre su trabajo y los mensajes, algunas solicitudes se quedaban sin responder o resultaban difíciles de organizar. Al observar que otros peluqueros de mi pueblo trabajaban de forma similar, decidí explorar una solución que automatizara las reservas y que pudiera ofrecer como servicio.
+
+Me interesaba aprender cómo construir automatizaciones útiles y explorar una oportunidad de negocio a partir de una necesidad cercana. El objetivo de CitaSalón es reducir la gestión manual de las citas y ayudar a que las solicitudes de reserva no se pierdan entre conversaciones.
+
+## Mi aportación y uso de IA
+
+Utilicé modelos de IA gratuitos a través de **OmniRoute** para generar y corregir código a partir de mis indicaciones. El desarrollo fue iterativo: definía lo que necesitaba, probaba el resultado y pedía cambios o correcciones al encontrar problemas.
+
+Mi trabajo se centró en:
+
+- **Investigar y definir la solución:** entender la necesidad, decidir las funcionalidades y concretar cómo debían funcionar las reservas y los paneles.
+- **Trabajar en las integraciones:** configurar la conexión con WhatsApp mediante Meta Developers y el entorno del proyecto en Cloudflare, con asistencia de IA.
+- **Probar e iterar:** realizar pruebas por WhatsApp con amigos y familiares, detectar errores y dirigir las siguientes correcciones a partir de lo observado.
+
+Actualmente mi aprendizaje se centra en entender el flujo completo del sistema, sus integraciones y su configuración.
+
+**La IA se utilizó durante el desarrollo.** El bot que atiende las reservas funciona mediante reglas y estados de conversación; no utiliza un modelo generativo para responder a cada mensaje.
+
+## Retos y aprendizajes
+
+Uno de los problemas que más encontré durante las pruebas fue que WhatsApp no respondía aunque la configuración pareciera correcta. En una de las incidencias documentadas, el diagnóstico asistido identificó que la configuración del webhook del número seguía apuntando a una dirección de pruebas antigua. Tras corregirla, los mensajes volvieron a llegar al bot.
+
+Mi participación consistió en probar los mensajes, detectar que el resultado no era el esperado y continuar las comprobaciones y correcciones con ayuda de IA. Esta experiencia me ayudó a entender la importancia de comprobar el recorrido completo de un mensaje entre WhatsApp, Meta y el servidor, además de verificar la interfaz.
+
+## Estado actual y próximos pasos
+
+He probado el proyecto durante el desarrollo con amigos y familiares. Estas pruebas me han servido para encontrar errores en el bot y mejorar sus recorridos. **Todavía no he realizado un piloto en una peluquería ni he medido resultados comerciales o ahorro de tiempo.**
+
+Mis próximos pasos son:
+
+1. **Reforzar la fiabilidad:** seguir comprobando las respuestas, las reservas y los cambios de citas antes de ofrecer el servicio.
+2. **Realizar un piloto en un salón:** contrastar el funcionamiento con el trabajo diario de un peluquero y recoger sus comentarios.
+3. **Estudiar la continuidad del servicio:** evaluar cómo disponer de una alternativa si Cloudflare deja de estar disponible.
+
+El proyecto ya incluye herramientas de copias de seguridad para recuperar datos. Mantener el servicio operativo durante una caída del proveedor es un objetivo distinto: **actualmente no hay un entorno alternativo ni un cambio automático a otro proveedor**.
 
 ## Qué puedes hacer
 
@@ -122,7 +162,7 @@ Abre [administración](http://localhost:8787/admin) o [recepción](http://localh
 | `/qr-recepcion` | Público | Cartel de acceso al panel de recepción. |
 | `/health` | Público | Comprobación del Worker. |
 
-Sin `WHATSAPP_TOKEN`, los mensajes quedan en **modo consola**. Para enviar mensajes reales hacen falta la configuración de Meta, sus credenciales y las plantillas que se vayan a utilizar. La entrega real por Meta sigue pendiente de una verificación completa; consulta los [pendientes](instrucciones/TAREAS_PENDIENTES.md).
+Sin `WHATSAPP_TOKEN`, los mensajes quedan en **modo consola**. Para enviar mensajes reales hacen falta la configuración de Meta, sus credenciales y las plantillas que se vayan a utilizar. Las pruebas manuales realizadas durante el desarrollo no sustituyen una validación operativa completa, incluida la entrega de mensajes y avisos por Meta antes de instalarlo en un salón; consulta los [pendientes](instrucciones/TAREAS_PENDIENTES.md).
 
 ## Seguridad y operación
 

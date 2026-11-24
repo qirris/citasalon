@@ -44,3 +44,4 @@ Antes de tocar nada:
 ## Presentación del proyecto (2026-11-24)
 
 - Para el README y el portfolio, el propietario quiere capturas reales de cómo se ve la aplicación. Utilizar la interfaz ejecutada en navegador con datos ficticios y documentar su procedencia; no sustituirla por imágenes generadas por IA ni mockups inventados.
+- Explicar de forma visible y transparente que el desarrollo utilizó IA mediante OmniRoute. Distinguir la generación/corrección de código asistida de la aportación del propietario (investigación, requisitos, configuración, pruebas e iteración), y del bot de reservas, que funciona mediante reglas y estados. Usar primera persona en las secciones personales y no atribuir clientes, ingresos, ahorro medido, dominio avanzado del código ni continuidad automática del servicio sin evidencia. A fecha de esta instrucción, las pruebas se hicieron con amigos y familiares y no existe piloto en una peluquería.
