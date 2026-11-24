@@ -78,6 +78,22 @@ Aquí se muestran dos partes del producto: la conversación del cliente en Whats
 
 Capturas reales de pruebas anteriores proporcionadas por el autor, con los teléfonos y el nombre del cliente ocultos. Muestran el recorrido observado durante esas pruebas; no son un enlace a una demostración pública activa ni sustituyen la validación operativa de la versión actual.
 
+<details>
+<summary><strong>Ver las cinco capturas en formato vertical (móvil)</strong></summary>
+
+<p><strong>1. Iniciar la reserva.</strong> El cliente pulsa «Reservar cita» y selecciona un servicio.</p>
+<p><a href="docs/capturas/whatsapp-inicio.jpg"><img src="docs/capturas/whatsapp-inicio.jpg" width="280" alt="Inicio de la reserva por WhatsApp, en formato vertical"></a></p>
+<p><strong>2. Elegir una hora.</strong> El bot ofrece los horarios disponibles para la selección del cliente.</p>
+<p><a href="docs/capturas/whatsapp-horas.jpg"><img src="docs/capturas/whatsapp-horas.jpg" width="280" alt="Selección de hora por WhatsApp, en formato vertical"></a></p>
+<p><strong>3. Recibir la confirmación.</strong> El cliente recibe el resumen y el acceso a «Mis citas».</p>
+<p><a href="docs/capturas/whatsapp-confirmacion.jpg"><img src="docs/capturas/whatsapp-confirmacion.jpg" width="280" alt="Confirmación de la reserva por WhatsApp, en formato vertical"></a></p>
+<p><strong>4. Consultar las citas.</strong> Desde «Mis citas» se consultan las próximas reservas y se accede a su gestión.</p>
+<p><a href="docs/capturas/whatsapp-mis-citas.jpg"><img src="docs/capturas/whatsapp-mis-citas.jpg" width="280" alt="Consulta de citas por WhatsApp, en formato vertical"></a></p>
+<p><strong>5. Recibir avisos.</strong> Ejemplos de cancelación y actualización recibidos durante las pruebas.</p>
+<p><a href="docs/capturas/whatsapp-avisos.jpg"><img src="docs/capturas/whatsapp-avisos.jpg" width="280" alt="Avisos de cancelación y actualización por WhatsApp, en formato vertical"></a></p>
+
+</details>
+
 <table>
   <tr>
     <th>1. Iniciar la reserva</th>

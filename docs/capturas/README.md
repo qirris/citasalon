@@ -35,3 +35,5 @@ Los originales se conservan intactos fuera del repositorio. Las copias publicada
 No se generó ni reconstruyó la interfaz con IA. Los mensajes, botones, fechas y datos funcionales visibles se mantienen como aparecen en las capturas originales. Se dejaron fuera las pantallas repetidas y los listados con nombres de prueba poco adecuados para la presentación.
 
 Estas imágenes acreditan ejemplos de funcionamiento durante las pruebas del propietario, incluidos mensajes de cancelación y actualización. No certifican toda la instalación actual, no habilitan una demostración pública y no cierran los pendientes de validación operativa ni el piloto en una peluquería.
+
+El README ofrece las filas de miniaturas para escritorio y un recorrido vertical desplegable para móvil, ya que GitHub comprime las columnas de las tablas en pantallas estrechas. Ambas vistas utilizan los mismos cinco archivos y permiten abrirlos a tamaño completo.
