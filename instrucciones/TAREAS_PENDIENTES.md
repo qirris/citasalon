@@ -4,6 +4,8 @@ Estado: núcleo funcional y verificado. El repositorio se preparó como pieza de
 
 Presentación (2026-11-24): README reorganizado con cinco capturas reales del código en local y datos ficticios; procedencia en `docs/capturas/README.md`. Esta actualización documental no cambia las verificaciones funcionales históricas indicadas a continuación.
 
+Galería de WhatsApp (2026-11-24): añadidas cinco capturas históricas del propietario, con explicación del recorrido y de los avisos recibidos. Las copias publicadas ocultan teléfonos y nombre del cliente; los originales permanecen intactos. Esta evidencia visual no equivale a un piloto en salón ni cierra la verificación operativa de Meta de la versión actual.
+
 Contexto confirmado por el propietario (2026-11-24): desarrollo asistido con modelos gratuitos mediante OmniRoute, a partir de una necesidad observada en peluquerías cercanas. Pruebas manuales por WhatsApp con amigos y familiares; todavía sin piloto en un salón ni resultados comerciales medidos. El README detalla su aportación y el uso de IA.
 
 Última revisión: **2026-11-04** (sanitización, renombrado a CitaSalón y limpieza del historial; `npm run check` limpio y **95/95 pruebas en verde**). El e2e sigue en **189/189, exit 0** del 2026-10-30, no re-ejecutado.

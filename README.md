@@ -13,7 +13,7 @@ Bot de citas para peluquerías con paneles de administración y recepción, disp
 ![Cloudflare Workers](https://img.shields.io/badge/Cloudflare_Workers-F38020?style=flat&logo=cloudflare&logoColor=white)
 ![Node.js 24+](https://img.shields.io/badge/Node.js-24%2B-339933?style=flat&logo=nodedotjs&logoColor=white)
 
-[Historia](#por-qué-creé-citasalón) · [Mi aportación e IA](#mi-aportación-y-uso-de-ia) · [Estado](#estado-actual-y-próximos-pasos) · [Capturas](#así-se-ve) · [Arranque local](#probar-en-local) · [Arquitectura](#cómo-funciona) · [Documentación](#documentación)
+[Historia](#por-qué-creé-citasalón) · [Mi aportación e IA](#mi-aportación-y-uso-de-ia) · [Estado](#estado-actual-y-próximos-pasos) · [WhatsApp](#así-se-reserva-por-whatsapp) · [Capturas](#así-se-ve) · [Arranque local](#probar-en-local) · [Arquitectura](#cómo-funciona) · [Documentación](#documentación)
 
 </div>
 
@@ -72,9 +72,54 @@ La disponibilidad tiene en cuenta la duración del servicio, el horario de cada 
 
 ## Así se ve
 
-Las imágenes se han tomado del código de este repositorio ejecutándose en un navegador, con una D1 local de demostración. Puedes pulsarlas para verlas a tamaño completo.
+Aquí se muestran dos partes del producto: la conversación del cliente en WhatsApp y los paneles que utiliza el salón. Puedes pulsar cada imagen para verla a tamaño completo.
 
-### Recepción desde el móvil
+### Así se reserva por WhatsApp
+
+Capturas reales de pruebas anteriores proporcionadas por el autor, con los teléfonos y el nombre del cliente ocultos. Muestran el recorrido observado durante esas pruebas; no son un enlace a una demostración pública activa ni sustituyen la validación operativa de la versión actual.
+
+<table>
+  <tr>
+    <th>1. Iniciar la reserva</th>
+    <th>2. Elegir una hora</th>
+    <th>3. Recibir la confirmación</th>
+  </tr>
+  <tr>
+    <td valign="top" align="center"><a href="docs/capturas/whatsapp-inicio.jpg"><img src="docs/capturas/whatsapp-inicio.jpg" width="230" alt="WhatsApp real: menú del bot, Reservar cita y selección de un servicio; teléfonos ocultos"></a></td>
+    <td valign="top" align="center"><a href="docs/capturas/whatsapp-horas.jpg"><img src="docs/capturas/whatsapp-horas.jpg" width="230" alt="WhatsApp real: lista de horas disponibles para seleccionar"></a></td>
+    <td valign="top" align="center"><a href="docs/capturas/whatsapp-confirmacion.jpg"><img src="docs/capturas/whatsapp-confirmacion.jpg" width="230" alt="WhatsApp real: cita confirmada con servicio, fecha, hora y ubicación; nombre del cliente oculto"></a></td>
+  </tr>
+  <tr>
+    <td valign="top">El cliente inicia la conversación, pulsa «Reservar cita» y selecciona un servicio.</td>
+    <td valign="top">El bot ofrece horarios disponibles para el servicio, profesional y día elegidos.</td>
+    <td valign="top">Tras confirmar, el cliente recibe el resumen de su reserva y el acceso a «Mis citas».</td>
+  </tr>
+</table>
+
+### Consulta de citas y avisos
+
+La conversación también permite consultar las próximas reservas. Los avisos muestran ejemplos recibidos durante las pruebas al cancelar o actualizar una cita.
+
+<table>
+  <tr>
+    <th>Mis citas</th>
+    <th>Avisos automáticos</th>
+  </tr>
+  <tr>
+    <td valign="top" align="center"><a href="docs/capturas/whatsapp-mis-citas.jpg"><img src="docs/capturas/whatsapp-mis-citas.jpg" width="280" alt="WhatsApp real: consulta de próximas citas y acceso a su gestión"></a></td>
+    <td valign="top" align="center"><a href="docs/capturas/whatsapp-avisos.jpg"><img src="docs/capturas/whatsapp-avisos.jpg" width="280" alt="WhatsApp real: dos avisos recibidos durante las pruebas, uno de cita cancelada y otro de cita actualizada"></a></td>
+  </tr>
+  <tr>
+    <td valign="top">Desde «Mis citas», el cliente consulta sus próximas reservas y accede a su gestión.</td>
+    <td valign="top">Un aviso comunica la cancelación; el otro informa del servicio, la nueva fecha, la hora y la profesional de una cita actualizada.</td>
+  </tr>
+</table>
+
+### Paneles del salón
+
+Las siguientes capturas se tomaron ejecutando el código del repositorio en un navegador, con una D1 local de demostración y datos ficticios.
+
+#### Recepción desde el móvil
 
 Agenda con navegación por fechas, filtro por profesional y tarjetas de citas con acciones rápidas.
 
@@ -89,13 +134,13 @@ Agenda con navegación por fechas, filtro por profesional y tarjetas de citas co
   </tr>
 </table>
 
-### Crear una cita
+#### Crear una cita
 
 El formulario muestra los huecos disponibles para el servicio, el profesional y la fecha elegidos.
 
 ![Formulario real de nueva cita con selección de huecos y datos de cliente de demostración](docs/capturas/nueva-cita.jpg)
 
-### Informes del salón
+#### Informes del salón
 
 Resumen por fechas, desglose por profesional y servicio, y descarga en CSV. Los importes se calculan con el precio actual de los servicios; no representan cobros ni facturas.
 
@@ -221,4 +266,4 @@ El E2E comprueba el bot y los paneles contra Wrangler local. Su última ejecuci�
 | Desplegar, hacer backups o restaurar | [Operación y despliegue](docs/OPERACION_Y_DESPLIEGUE.md) |
 | Contribuir o continuar el desarrollo | [AGENTS.md](AGENTS.md), [memoria](memoria.md) y [tareas pendientes](instrucciones/TAREAS_PENDIENTES.md) |
 
-<sub>Las capturas muestran la interfaz real con datos ficticios. [Detalles de las capturas](docs/capturas/README.md).</sub>
+<sub>Capturas reales de pruebas de WhatsApp con datos personales ocultos y de paneles locales con datos ficticios. [Detalles de las capturas](docs/capturas/README.md).</sub>
